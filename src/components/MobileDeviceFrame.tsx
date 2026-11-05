@@ -1,5 +1,5 @@
 import React from 'react';
-import { Smartphone, Monitor, Wifi, Battery, Signal, Film, Home, Compass, Download, Sparkles, Settings } from 'lucide-react';
+import { Smartphone, Monitor, Wifi, Battery, Signal, Film, Home, Compass, Download, Sparkles, Settings, Heart, Search } from 'lucide-react';
 import { Language, UserSubscription } from '../types';
 
 interface MobileDeviceFrameProps {
@@ -7,9 +7,12 @@ interface MobileDeviceFrameProps {
   onExitMobileMode: () => void;
   subscription: UserSubscription;
   downloadCount: number;
+  watchlistCount?: number;
   onOpenDownloads: () => void;
+  onOpenWatchlist?: () => void;
   onOpenSubscription: () => void;
   onOpenSettings: () => void;
+  onOpenSearch?: () => void;
   currentLanguage: Language;
   onSelectLanguage: (lang: Language) => void;
 }
@@ -19,9 +22,12 @@ export const MobileDeviceFrame: React.FC<MobileDeviceFrameProps> = ({
   onExitMobileMode,
   subscription,
   downloadCount,
+  watchlistCount = 0,
   onOpenDownloads,
+  onOpenWatchlist,
   onOpenSubscription,
   onOpenSettings,
+  onOpenSearch,
   currentLanguage,
   onSelectLanguage
 }) => {
@@ -68,7 +74,7 @@ export const MobileDeviceFrame: React.FC<MobileDeviceFrameProps> = ({
         </div>
 
         {/* Mobile Bottom Tab Bar */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-neutral-950/95 backdrop-blur-md border-t border-neutral-800/80 px-6 flex items-center justify-between z-30">
+        <div className="absolute bottom-0 left-0 right-0 h-16 bg-neutral-950/95 backdrop-blur-md border-t border-neutral-800/80 px-3 flex items-center justify-between z-30">
           <button 
             onClick={() => onSelectLanguage('all')}
             className={`flex flex-col items-center gap-1 text-[10px] font-medium transition-colors ${
@@ -79,15 +85,30 @@ export const MobileDeviceFrame: React.FC<MobileDeviceFrameProps> = ({
             <span>Home</span>
           </button>
 
-          <button 
-            onClick={() => onSelectLanguage('kinyarwanda')}
-            className={`flex flex-col items-center gap-1 text-[10px] font-medium transition-colors ${
-              currentLanguage === 'kinyarwanda' ? 'text-rose-500' : 'text-neutral-400'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Agasobanuye</span>
-          </button>
+          {onOpenSearch && (
+            <button 
+              onClick={onOpenSearch}
+              className="flex flex-col items-center gap-1 text-[10px] font-medium text-neutral-400 hover:text-white transition-colors"
+            >
+              <Search className="w-4 h-4 text-rose-500" />
+              <span>Top 10</span>
+            </button>
+          )}
+
+          {onOpenWatchlist && (
+            <button 
+              onClick={onOpenWatchlist}
+              className="relative flex flex-col items-center gap-1 text-[10px] font-medium text-neutral-400 hover:text-rose-400 transition-colors"
+            >
+              <Heart className={`w-4 h-4 ${watchlistCount > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span>Watchlist</span>
+              {watchlistCount > 0 && (
+                <span className="absolute -top-1 right-2 w-4 h-4 rounded-full bg-rose-600 text-[9px] font-bold text-white flex items-center justify-center">
+                  {watchlistCount}
+                </span>
+              )}
+            </button>
+          )}
 
           <button 
             onClick={onOpenDownloads}

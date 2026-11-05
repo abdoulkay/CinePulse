@@ -4,13 +4,16 @@ import {
   Smartphone, Monitor, Search, Play, ArrowRight, ShieldCheck, Heart, Phone
 } from 'lucide-react';
 import { 
-  AppLanguage, AppTheme, DJProfile, DownloadedItem, Episode, Language, MediaItem, 
-  SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality 
+  AppLanguage, AppTheme, ContinueWatchingItem, DJProfile, DownloadedItem, Episode, Language, MediaItem, 
+  SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality, WatchlistItem 
 } from './types';
-import { DJ_PROFILES, MEDIA_CATALOG, SUBSCRIPTION_PLANS, INITIAL_DOWNLOADS } from './data/mockData';
+import { DJ_PROFILES, MEDIA_CATALOG, SUBSCRIPTION_PLANS, INITIAL_DOWNLOADS, INITIAL_WATCHLIST, INITIAL_CONTINUE_WATCHING } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { CategoryFilterBar } from './components/CategoryFilterBar';
 import { MediaCard } from './components/MediaCard';
+import { MediaRow } from './components/MediaRow';
+import { ContinueWatchingRow } from './components/ContinueWatchingRow';
+import { SearchTop10Modal } from './components/SearchTop10Modal';
 import { MediaDetailModal } from './components/MediaDetailModal';
 import { VideoPlayerModal } from './components/VideoPlayerModal';
 import { OfflineDownloadsModal } from './components/OfflineDownloadsModal';
@@ -19,6 +22,7 @@ import { MobileDeviceFrame } from './components/MobileDeviceFrame';
 import { SettingsModal } from './components/SettingsModal';
 import { AuthModal } from './components/AuthModal';
 import { SessionConflictModal } from './components/SessionConflictModal';
+import { WatchlistSection } from './components/WatchlistSection';
 import { TRANSLATIONS } from './utils/i18n';
 
 export default function App() {
@@ -49,11 +53,42 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_DOWNLOADS;
   });
 
+  // Watchlist state (persists in localStorage)
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_watchlist');
+      return saved ? JSON.parse(saved) : INITIAL_WATCHLIST;
+    } catch {
+      return INITIAL_WATCHLIST;
+    }
+  });
+
+  // Sync watchlist to localStorage
+  useEffect(() => {
+    localStorage.setItem('cinepulse_watchlist', JSON.stringify(watchlist));
+  }, [watchlist]);
+
+  // Continue Watching state (persists in localStorage)
+  const [continueWatching, setContinueWatching] = useState<ContinueWatchingItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_continue_watching');
+      return saved ? JSON.parse(saved) : INITIAL_CONTINUE_WATCHING;
+    } catch {
+      return INITIAL_CONTINUE_WATCHING;
+    }
+  });
+
+  // Sync continue watching to localStorage
+  useEffect(() => {
+    localStorage.setItem('cinepulse_continue_watching', JSON.stringify(continueWatching));
+  }, [continueWatching]);
+
   // Active modals & playback
   const [selectedDetailItem, setSelectedDetailItem] = useState<MediaItem | null>(null);
-  const [activePlayerItem, setActivePlayerItem] = useState<{ item: MediaItem; episode?: Episode } | null>(null);
+  const [activePlayerItem, setActivePlayerItem] = useState<{ item: MediaItem; episode?: Episode; initialTime?: number } | null>(null);
   const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState<boolean>(false);
   const [isDownloadsModalOpen, setIsDownloadsModalOpen] = useState<boolean>(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [isMobileDeviceMode, setIsMobileDeviceMode] = useState<boolean>(false);
 
   // Theme state ('dark' | 'light')
@@ -387,6 +422,258 @@ export default function App() {
     setActivePlayerItem({ item: originalMedia, episode: episodeObj });
   };
 
+  // Check if item or specific episode is in watchlist
+  const isWatchlisted = (mediaId: string, episodeId?: string): boolean => {
+    if (episodeId) {
+      return watchlist.some((w) => w.mediaId === mediaId && w.episodeId === episodeId);
+    }
+    return watchlist.some((w) => w.mediaId === mediaId && !w.episodeId);
+  };
+
+  // Toggle movie or specific episode bookmark
+  const handleToggleWatchlist = (media: MediaItem, episode?: Episode) => {
+    if (episode) {
+      const episodeBookmarkId = `wl-${media.id}-ep-${episode.id || episode.episodeNumber}`;
+      const existing = watchlist.find((w) => w.id === episodeBookmarkId || (w.mediaId === media.id && w.episodeId === episode.id));
+
+      if (existing) {
+        setWatchlist((prev) => prev.filter((w) => w.id !== existing.id));
+        showToast(`Removed "${episode.title}" from My Watchlist`, 'info');
+      } else {
+        const newItem: WatchlistItem = {
+          id: episodeBookmarkId,
+          mediaId: media.id,
+          itemType: 'episode',
+          title: episode.title,
+          subTitle: `${media.title} · S${episode.seasonNumber || 1}:Ep ${episode.episodeNumber}`,
+          mediaTitle: media.title,
+          episodeId: episode.id,
+          episodeNumber: episode.episodeNumber,
+          seasonNumber: episode.seasonNumber || 1,
+          language: media.language,
+          djName: media.djName,
+          posterBg: media.posterBg,
+          bannerColor: media.bannerColor,
+          matchScore: media.matchScore,
+          duration: episode.duration,
+          year: media.year,
+          rating: media.rating,
+          genres: media.genres,
+          addedAt: 'Just now',
+          videoUrl: episode.videoUrl || media.videoUrl
+        };
+        setWatchlist((prev) => [newItem, ...prev]);
+        showToast(`Bookmarked "${episode.title}" to My Watchlist! ❤️`, 'success');
+      }
+    } else {
+      const mediaBookmarkId = `wl-${media.id}`;
+      const existing = watchlist.find((w) => w.id === mediaBookmarkId || (w.mediaId === media.id && !w.episodeId));
+
+      if (existing) {
+        setWatchlist((prev) => prev.filter((w) => w.id !== existing.id));
+        showToast(`Removed "${media.title}" from My Watchlist`, 'info');
+      } else {
+        const newItem: WatchlistItem = {
+          id: mediaBookmarkId,
+          mediaId: media.id,
+          itemType: media.type === 'tv' ? 'tv' : 'movie',
+          title: media.title,
+          subTitle: media.djName ? `${media.djName} · ${media.duration}` : `${media.duration} · ${media.year}`,
+          mediaTitle: media.title,
+          language: media.language,
+          djName: media.djName,
+          posterBg: media.posterBg,
+          bannerColor: media.bannerColor,
+          matchScore: media.matchScore,
+          duration: media.duration,
+          year: media.year,
+          rating: media.rating,
+          genres: media.genres,
+          addedAt: 'Just now',
+          videoUrl: media.videoUrl
+        };
+        setWatchlist((prev) => [newItem, ...prev]);
+        showToast(`Added "${media.title}" to My Watchlist! ❤️`, 'success');
+      }
+    }
+  };
+
+  // Remove item from watchlist
+  const handleRemoveFromWatchlist = (id: string) => {
+    setWatchlist((prev) => prev.filter((w) => w.id !== id));
+    showToast('Removed from Watchlist.', 'info');
+  };
+
+  // Clear watchlist
+  const handleClearWatchlist = () => {
+    setWatchlist([]);
+    showToast('Watchlist cleared.', 'info');
+  };
+
+  // Play item from watchlist directly
+  const handlePlayWatchlistItem = (watchlistItem: WatchlistItem) => {
+    const foundMedia = MEDIA_CATALOG.find((m) => m.id === watchlistItem.mediaId);
+    const originalMedia: MediaItem = foundMedia || {
+      id: watchlistItem.mediaId,
+      title: watchlistItem.title,
+      type: watchlistItem.itemType === 'episode' ? 'tv' : 'movie',
+      language: watchlistItem.language,
+      subCategory: watchlistItem.itemType === 'episode' ? 'tv' : 'movie',
+      year: watchlistItem.year,
+      rating: watchlistItem.rating,
+      matchScore: watchlistItem.matchScore,
+      duration: watchlistItem.duration,
+      genres: watchlistItem.genres,
+      synopsis: 'Playing from bookmarked watchlist.',
+      bannerColor: watchlistItem.bannerColor,
+      posterBg: watchlistItem.posterBg,
+      videoUrl: watchlistItem.videoUrl || '',
+      audioTracks: [
+        { id: 'wl-audio', label: watchlistItem.djName ? `${watchlistItem.djName} Audio` : 'Standard Audio', type: 'original', language: 'en' }
+      ]
+    };
+
+    let episodeObj: Episode | undefined;
+    if (watchlistItem.itemType === 'episode' && originalMedia.episodes) {
+      episodeObj = originalMedia.episodes.find((e: Episode) => e.id === watchlistItem.episodeId || e.episodeNumber === watchlistItem.episodeNumber);
+    }
+    if (!episodeObj && watchlistItem.itemType === 'episode') {
+      episodeObj = {
+        id: watchlistItem.episodeId || `${watchlistItem.mediaId}-ep`,
+        episodeNumber: watchlistItem.episodeNumber || 1,
+        seasonNumber: watchlistItem.seasonNumber || 1,
+        title: watchlistItem.title,
+        duration: watchlistItem.duration,
+        synopsis: 'Bookmarked episode playback.',
+        thumbnailUrl: '',
+        fileSizeMb: 250,
+        videoUrl: watchlistItem.videoUrl || originalMedia.videoUrl
+      };
+    }
+
+    setActivePlayerItem({ item: originalMedia, episode: episodeObj });
+  };
+
+  // Scroll to Watchlist helper
+  const handleScrollToWatchlist = () => {
+    if (currentLanguage !== 'all' || selectedDjId || searchQuery.trim() || selectedGenre !== 'all') {
+      setCurrentLanguage('all');
+      setCurrentSubCategory('all');
+      setSelectedDjId('');
+      setSelectedGenre('all');
+      setSearchQuery('');
+    }
+    setTimeout(() => {
+      document.getElementById('my-watchlist-section')?.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+  };
+
+  // CONTINUE WATCHING: Update playback progress automatically
+  const handleUpdateProgress = (
+    media: MediaItem,
+    episode: Episode | undefined,
+    currentTime: number,
+    duration: number
+  ) => {
+    const dur = Math.max(1, duration);
+    const percent = Math.min(100, Math.round((currentTime / dur) * 100));
+    const itemId = episode ? `cw-${media.id}-ep-${episode.episodeNumber}` : `cw-${media.id}`;
+
+    // If user has watched > 95%, treat as finished and remove
+    if (percent >= 95) {
+      setContinueWatching((prev) => prev.filter((cw) => cw.id !== itemId));
+      return;
+    }
+
+    setContinueWatching((prev) => {
+      const existingIdx = prev.findIndex((cw) => cw.id === itemId);
+      const updatedItem: ContinueWatchingItem = {
+        id: itemId,
+        mediaId: media.id,
+        itemType: episode ? 'episode' : (media.type === 'tv' ? 'episode' : 'movie'),
+        title: episode ? episode.title : media.title,
+        subTitle: episode 
+          ? `${media.title} · S${episode.seasonNumber || 1}:Ep ${episode.episodeNumber}` 
+          : (media.djName ? `${media.djName} · ${media.duration}` : `${media.year} · ${media.duration}`),
+        mediaTitle: media.title,
+        episodeId: episode?.id,
+        episodeNumber: episode?.episodeNumber,
+        seasonNumber: episode?.seasonNumber || 1,
+        currentTimeSeconds: Math.floor(currentTime),
+        durationSeconds: Math.floor(dur),
+        progressPercent: Math.max(5, percent),
+        posterBg: media.posterBg,
+        bannerColor: media.bannerColor,
+        lastWatchedAt: 'Just now',
+        language: media.language,
+        djName: media.djName,
+        videoUrl: episode ? episode.videoUrl : media.videoUrl
+      };
+
+      if (existingIdx !== -1) {
+        const clone = [...prev];
+        clone[existingIdx] = updatedItem;
+        return clone;
+      } else {
+        return [updatedItem, ...prev];
+      }
+    });
+  };
+
+  // CONTINUE WATCHING: Resume playback at exact recorded second
+  const handleResumePlayback = (cwItem: ContinueWatchingItem) => {
+    const media = MEDIA_CATALOG.find((m) => m.id === cwItem.mediaId) || {
+      id: cwItem.mediaId,
+      title: cwItem.mediaTitle || cwItem.title,
+      type: cwItem.itemType === 'episode' ? 'tv' : 'movie',
+      language: cwItem.language || 'swahili',
+      subCategory: cwItem.itemType === 'episode' ? 'tv' : 'movie',
+      year: 2024,
+      rating: '16+',
+      matchScore: 98,
+      duration: '45m',
+      genres: ['Action', 'Thriller'],
+      synopsis: 'Resuming playback where you left off.',
+      bannerColor: cwItem.bannerColor || 'from-neutral-900 to-neutral-950',
+      posterBg: cwItem.posterBg || 'bg-neutral-900',
+      videoUrl: cwItem.videoUrl || '',
+      audioTracks: [{ id: 'cw-audio', label: 'Audio', type: 'original', language: 'en' }]
+    };
+
+    let ep: Episode | undefined;
+    if (cwItem.itemType === 'episode') {
+      if (media.episodes) {
+        ep = media.episodes.find((e) => e.episodeNumber === cwItem.episodeNumber || e.id === cwItem.episodeId);
+      }
+      if (!ep) {
+        ep = {
+          id: cwItem.episodeId || `${media.id}-ep-${cwItem.episodeNumber || 1}`,
+          episodeNumber: cwItem.episodeNumber || 1,
+          seasonNumber: cwItem.seasonNumber || 1,
+          title: cwItem.title,
+          duration: `${Math.ceil(cwItem.durationSeconds / 60)}m`,
+          synopsis: 'Resuming playback.',
+          thumbnailUrl: '',
+          fileSizeMb: 250,
+          videoUrl: cwItem.videoUrl || media.videoUrl
+        };
+      }
+    }
+
+    setActivePlayerItem({
+      item: media,
+      episode: ep,
+      initialTime: cwItem.currentTimeSeconds
+    });
+    showToast(`Resumed "${cwItem.title}" at ${Math.floor(cwItem.currentTimeSeconds / 60)}m!`, 'info');
+  };
+
+  // CONTINUE WATCHING: Remove item from list
+  const handleRemoveFromContinueWatching = (id: string) => {
+    setContinueWatching((prev) => prev.filter((cw) => cw.id !== id));
+    showToast('Removed from Continue Watching.', 'info');
+  };
+
   // Extract unique genres across catalog
   const allGenres = useMemo(() => {
     const set = new Set<string>();
@@ -438,7 +725,25 @@ export default function App() {
     });
   }, [currentLanguage, currentSubCategory, selectedDjId, selectedGenre, searchQuery]);
 
-  // Grouped items by section for the 'all' view
+  // Curated category rows for the Netflix-style landing view
+  const actionItems = useMemo(
+    () => MEDIA_CATALOG.filter((m) => m.genres.some((g) => ['Action', 'Martial Arts', 'Adventure'].includes(g))),
+    []
+  );
+  const comedyItems = useMemo(
+    () => MEDIA_CATALOG.filter((m) => m.genres.includes('Comedy') || m.djName?.includes('Murphy') || m.title.includes('Shaolin') || m.title.includes('Vituko')),
+    []
+  );
+  const thrillerItems = useMemo(
+    () => MEDIA_CATALOG.filter((m) => m.genres.some((g) => ['Thriller', 'Crime', 'Mystery', 'Suspense'].includes(g))),
+    []
+  );
+  const becauseYouWatchedItems = useMemo(
+    () => MEDIA_CATALOG.filter((m) => ['swa-afro-1', 'kin-giti-1', 'swa-murphy-1', 'kin-rocky-2', 'swa-afro-2'].includes(m.id)),
+    []
+  );
+
+  // Grouped items by language for the catalog
   const kinyarwandaItems = useMemo(
     () => MEDIA_CATALOG.filter((m) => m.language === 'kinyarwanda'),
     []
@@ -561,7 +866,7 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
                 {filteredMedia.map((item) => (
                   <MediaCard
                     key={item.id}
@@ -577,186 +882,187 @@ export default function App() {
                       }
                     }}
                     isDownloaded={downloadedIds.has(item.id)}
+                    isWatchlisted={isWatchlisted(item.id)}
+                    onToggleWatchlist={handleToggleWatchlist}
                   />
                 ))}
               </div>
             )}
           </div>
         ) : (
-          /* CASE 2: "All Cinema" Overview with Curated Categorized Sections */
-          <div className="space-y-12">
+          /* CASE 2: Netflix-Ordered Category Rails & Continue Watching */
+          <div className="space-y-8 sm:space-y-10">
             
-            {/* Section 1: Kinyarwanda Translated (Agasobanuye by Rwandan DJs) */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <Mic className="w-5 h-5 text-rose-500" />
-                    <span>Agasobanuye: Kinyarwanda Voiceover Translations</span>
-                  </h2>
-                  <p className="text-xs text-neutral-400 mt-0.5">
-                    Reworked by iconic Rwandan video translators: Junior Giti, Rocky Kimomo, Savimbi, DJ Young, Chris & Sankara
-                  </p>
-                </div>
+            {/* 1. Continue Watching Row */}
+            {continueWatching.length > 0 && (
+              <ContinueWatchingRow
+                items={continueWatching}
+                onResume={handleResumePlayback}
+                onRemove={handleRemoveFromContinueWatching}
+                onSelectMedia={(media) => setSelectedDetailItem(media)}
+                subscription={subscription}
+              />
+            )}
 
-                <button
-                  onClick={() => setCurrentLanguage('kinyarwanda')}
-                  className="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1"
-                >
-                  <span>Explore by DJs</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {/* 2. Because You Watched Commando ya Mwisho (98% match) */}
+            <MediaRow
+              title="Because You Watched Commando ya Mwisho"
+              subtitle="98% Match based on your high-octane African cinema taste"
+              badge="98% Match"
+              badgeColor="text-rose-400 bg-rose-500/10 border-rose-500/30"
+              items={becauseYouWatchedItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              initialCardLimit={5}
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {kinyarwandaItems.slice(0, 4).map((item) => (
-                  <MediaCard
-                    key={item.id}
-                    item={item}
-                    subscription={subscription}
-                    onSelect={(item) => setSelectedDetailItem(item)}
-                    onPlay={(item) => setActivePlayerItem({ item })}
-                    onQuickDownload={(item) => {
-                      if (item.type === 'movie') {
-                        handleDownloadMovie(item);
-                      } else {
-                        setSelectedDetailItem(item);
-                      }
-                    }}
-                    isDownloaded={downloadedIds.has(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
+            {/* 3. Action Blockbusters & Martial Arts */}
+            <MediaRow
+              title="Action Blockbusters & Martial Arts"
+              subtitle="Fast-paced explosive missions & intense fight choreography"
+              badge="Trending Action"
+              badgeColor="text-rose-400 bg-rose-500/10 border-rose-500/30"
+              items={actionItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              initialCardLimit={5}
+            />
 
-            {/* Section 2: Swahili Translated (Video Jokers / DJs) */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <Film className="w-5 h-5 text-amber-500" />
-                    <span>Swahili Translated Cinema (DJs & Video Jokers)</span>
-                  </h2>
-                  <p className="text-xs text-neutral-400 mt-0.5">
-                    Commentary & real-time translation by DJ Afro Amigo, DJ Murphy, DJ Smith, DJ Ally B & DJ Black
-                  </p>
-                </div>
+            {/* 4. Comedy & DJ Humor */}
+            <MediaRow
+              title="Comedy & DJ Humor"
+              subtitle="Non-stop laughter, witty commentaries & parody punchlines"
+              badge="DJ Wit & Parody"
+              badgeColor="text-amber-400 bg-amber-500/10 border-amber-500/30"
+              items={comedyItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              initialCardLimit={5}
+            />
 
-                <button
-                  onClick={() => setCurrentLanguage('swahili')}
-                  className="text-xs text-amber-400 hover:text-amber-300 font-semibold flex items-center gap-1"
-                >
-                  <span>View All Swahili DJs</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {/* 5. Suspense & Crime Thrillers */}
+            <MediaRow
+              title="Suspense & Crime Thrillers"
+              subtitle="Heart-racing mysteries, urban investigations & dark twists"
+              badge="Top Suspense"
+              badgeColor="text-cyan-400 bg-cyan-500/10 border-cyan-500/30"
+              items={thrillerItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              initialCardLimit={5}
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {swahiliItems.slice(0, 4).map((item) => (
-                  <MediaCard
-                    key={item.id}
-                    item={item}
-                    subscription={subscription}
-                    onSelect={(item) => setSelectedDetailItem(item)}
-                    onPlay={(item) => setActivePlayerItem({ item })}
-                    onQuickDownload={(item) => {
-                      if (item.type === 'movie') {
-                        handleDownloadMovie(item);
-                      } else {
-                        setSelectedDetailItem(item);
-                      }
-                    }}
-                    isDownloaded={downloadedIds.has(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
+            {/* 6. Agasobanuye: Rwandan DJ Translations */}
+            <MediaRow
+              id="kinyarwanda-cinema-section"
+              title="Agasobanuye: Rwandan DJ Translations"
+              subtitle="Iconic voiceovers by Junior Giti, Rocky Kimomo, Savimbi & Sankara"
+              badge="Kinyarwanda"
+              badgeColor="text-rose-400 bg-rose-500/10 border-rose-500/30"
+              items={kinyarwandaItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              onSeeMore={() => setCurrentLanguage('kinyarwanda')}
+              initialCardLimit={5}
+            />
 
-            {/* Section 3: English Dubbed (Movies & TV Shows) */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <Tv className="w-5 h-5 text-blue-500" />
-                    <span>English Dubbed Movies & TV Shows</span>
-                  </h2>
-                  <p className="text-xs text-neutral-400 mt-0.5">
-                    High production value studio dubs with subcategories for Movies and TV Series
-                  </p>
-                </div>
+            {/* 7. Swahili DJ Voiceovers */}
+            <MediaRow
+              title="Swahili DJ Voiceovers (Video Jokers)"
+              subtitle="Commentary & narrative translations by DJ Afro Amigo, DJ Murphy, DJ Smith"
+              badge="Swahili Hits"
+              badgeColor="text-amber-400 bg-amber-500/10 border-amber-500/30"
+              items={swahiliItems}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              onSeeMore={() => setCurrentLanguage('swahili')}
+              initialCardLimit={5}
+            />
 
-                <button
-                  onClick={() => setCurrentLanguage('english')}
-                  className="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1"
-                >
-                  <span>Filter Movies / Series</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
+            {/* 8. My Watchlist Section */}
+            <WatchlistSection
+              watchlist={watchlist}
+              onPlayItem={handlePlayWatchlistItem}
+              onSelectItem={(mediaId) => {
+                const item = MEDIA_CATALOG.find((m) => m.id === mediaId);
+                if (item) setSelectedDetailItem(item);
+              }}
+              onRemoveItem={handleRemoveFromWatchlist}
+              onClearWatchlist={handleClearWatchlist}
+              onBrowseCatalog={() => {
+                const el = document.getElementById('kinyarwanda-cinema-section');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              appLanguage={appLanguage}
+            />
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {englishItems.slice(0, 4).map((item) => (
-                  <MediaCard
-                    key={item.id}
-                    item={item}
-                    subscription={subscription}
-                    onSelect={(item) => setSelectedDetailItem(item)}
-                    onPlay={(item) => setActivePlayerItem({ item })}
-                    onQuickDownload={(item) => {
-                      if (item.type === 'movie') {
-                        handleDownloadMovie(item);
-                      } else {
-                        setSelectedDetailItem(item);
-                      }
-                    }}
-                    isDownloaded={downloadedIds.has(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Section 4: French Dubbed (VF - Films & Séries) */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
-                    <Film className="w-5 h-5 text-indigo-500" />
-                    <span>Version Française (Films & Séries Doublés en Français)</span>
-                  </h2>
-                  <p className="text-xs text-neutral-400 mt-0.5">
-                    Sélection internationale entièrement doublée en Français (VF)
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => setCurrentLanguage('french')}
-                  className="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1"
-                >
-                  <span>Voir Catalogue VF</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {frenchItems.slice(0, 4).map((item) => (
-                  <MediaCard
-                    key={item.id}
-                    item={item}
-                    subscription={subscription}
-                    onSelect={(item) => setSelectedDetailItem(item)}
-                    onPlay={(item) => setActivePlayerItem({ item })}
-                    onQuickDownload={(item) => {
-                      if (item.type === 'movie') {
-                        handleDownloadMovie(item);
-                      } else {
-                        setSelectedDetailItem(item);
-                      }
-                    }}
-                    isDownloaded={downloadedIds.has(item.id)}
-                  />
-                ))}
-              </div>
-            </div>
+            {/* 9. English & French Dubbed Cinema */}
+            <MediaRow
+              title="English & French Dubbed Cinema"
+              subtitle="Studio-grade multi-language dubs and international selections"
+              badge="VF & Dubbed"
+              badgeColor="text-indigo-400 bg-indigo-500/10 border-indigo-500/30"
+              items={[...englishItems, ...frenchItems]}
+              subscription={subscription}
+              onSelect={(item) => setSelectedDetailItem(item)}
+              onPlay={(item) => setActivePlayerItem({ item })}
+              onQuickDownload={(item) => {
+                if (item.type === 'movie') handleDownloadMovie(item);
+                else setSelectedDetailItem(item);
+              }}
+              downloadedIds={downloadedIds}
+              isWatchlisted={(id) => isWatchlisted(id)}
+              onToggleWatchlist={handleToggleWatchlist}
+              initialCardLimit={5}
+            />
 
           </div>
         )}
@@ -895,9 +1201,12 @@ export default function App() {
           onExitMobileMode={() => setIsMobileDeviceMode(false)}
           subscription={subscription}
           downloadCount={downloads.length}
+          watchlistCount={watchlist.length}
           onOpenDownloads={() => setIsDownloadsModalOpen(true)}
+          onOpenWatchlist={handleScrollToWatchlist}
           onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
+          onOpenSearch={() => setIsSearchModalOpen(true)}
           currentLanguage={currentLanguage}
           onSelectLanguage={setCurrentLanguage}
         >
@@ -923,10 +1232,13 @@ export default function App() {
             }}
             currentUser={currentUser}
             downloadCount={downloads.length}
+            watchlistCount={watchlist.length}
+            onOpenWatchlist={handleScrollToWatchlist}
             isMobileDeviceMode={isMobileDeviceMode}
             onToggleDeviceMode={() => setIsMobileDeviceMode(!isMobileDeviceMode)}
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            onOpenSearchModal={() => setIsSearchModalOpen(true)}
             appLanguage={appLanguage}
           />
 
@@ -938,6 +1250,17 @@ export default function App() {
       )}
 
       {/* ================= MODALS ================= */}
+
+      {/* Top 10 Most Searched & Live Discovery Modal */}
+      <SearchTop10Modal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onSelectMedia={(item) => setSelectedDetailItem(item)}
+        onPlayMedia={(item) => setActivePlayerItem({ item })}
+        subscription={subscription}
+      />
 
       {/* Media Detail Modal */}
       {selectedDetailItem && (
@@ -953,6 +1276,8 @@ export default function App() {
           onDownloadMovie={handleDownloadMovie}
           downloadedIds={downloadedIds}
           onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
+          isItemWatchlisted={isWatchlisted}
+          onToggleWatchlist={handleToggleWatchlist}
         />
       )}
 
@@ -965,6 +1290,8 @@ export default function App() {
           onClose={() => setActivePlayerItem(null)}
           subscription={subscription}
           onOpenSubscriptionModal={() => setIsSubscriptionModalOpen(true)}
+          initialTime={activePlayerItem.initialTime}
+          onProgressUpdate={handleUpdateProgress}
           onNextEpisode={() => {
             if (activePlayerItem.item.episodes && activePlayerItem.episode) {
               const currentIdx = activePlayerItem.item.episodes.findIndex(

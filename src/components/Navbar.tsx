@@ -1,5 +1,5 @@
 import React from 'react';
-import { Film, Download, Sparkles, Smartphone, Monitor, Search, X, Settings, User, LogIn } from 'lucide-react';
+import { Film, Download, Sparkles, Smartphone, Monitor, Search, X, Settings, User, LogIn, Heart } from 'lucide-react';
 import { AppLanguage, Language, UserAccount, UserSubscription } from '../types';
 import { TRANSLATIONS } from '../utils/i18n';
 
@@ -13,10 +13,13 @@ interface NavbarProps {
   onOpenAuthModal: (mode?: 'login' | 'signup') => void;
   currentUser: UserAccount | null;
   downloadCount: number;
+  watchlistCount: number;
+  onOpenWatchlist?: () => void;
   isMobileDeviceMode: boolean;
   onToggleDeviceMode: () => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  onOpenSearchModal?: () => void;
   appLanguage: AppLanguage;
 }
 
@@ -30,10 +33,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuthModal,
   currentUser,
   downloadCount,
+  watchlistCount,
+  onOpenWatchlist,
   isMobileDeviceMode,
   onToggleDeviceMode,
   searchQuery,
   onSearchChange,
+  onOpenSearchModal,
   appLanguage
 }) => {
   const [showSearchInput, setShowSearchInput] = React.useState(false);
@@ -121,9 +127,24 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Zone 3: Primary Action & Controls */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           
-          {/* Search Bar / Trigger */}
+          {/* Search Bar / Trigger with Top 10 Modal */}
           <div className="relative">
-            {showSearchInput ? (
+            {onOpenSearchModal ? (
+              <button
+                onClick={onOpenSearchModal}
+                className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-neutral-900/90 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-neutral-400 hover:text-white transition-all text-xs"
+                title="Search movies, series, comedy & top 10"
+                aria-label="Search movies, series, comedy & top 10"
+              >
+                <Search className="w-4 h-4 text-rose-500" />
+                <span className="hidden sm:inline text-neutral-400 max-w-[120px] truncate">
+                  {searchQuery || t.searchPlaceholder}
+                </span>
+                <span className="hidden lg:inline text-[10px] bg-neutral-800 text-neutral-400 px-1.5 py-0.5 rounded font-mono">
+                  Top 10
+                </span>
+              </button>
+            ) : showSearchInput ? (
               <div className="flex items-center bg-neutral-900 border border-neutral-700 rounded-lg px-2.5 py-1.5 w-44 sm:w-60 transition-all">
                 <Search className="w-4 h-4 text-neutral-400 shrink-0 mr-2" />
                 <input
@@ -155,6 +176,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
           </div>
+
+          {/* Watchlist Button with Badge */}
+          {onOpenWatchlist && (
+            <button
+              onClick={onOpenWatchlist}
+              className="relative p-2 text-neutral-300 hover:text-white hover:bg-neutral-900 rounded-lg transition-colors flex items-center gap-1.5"
+              title={t.myWatchlist}
+              aria-label={t.myWatchlist}
+            >
+              <Heart className={`w-4 h-4 ${watchlistCount > 0 ? 'fill-rose-500 text-rose-500' : ''}`} />
+              <span className="hidden lg:inline text-xs font-medium">{t.watchlist}</span>
+              {watchlistCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-rose-600 text-[11px] font-bold text-white flex items-center justify-center tabular-nums">
+                  {watchlistCount}
+                </span>
+              )}
+            </button>
+          )}
 
           {/* Downloads Button with Badge */}
           <button

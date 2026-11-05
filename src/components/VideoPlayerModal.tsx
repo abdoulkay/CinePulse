@@ -14,6 +14,8 @@ interface VideoPlayerModalProps {
   onOpenSubscriptionModal: () => void;
   onNextEpisode?: () => void;
   onPrevEpisode?: () => void;
+  initialTime?: number;
+  onProgressUpdate?: (media: MediaItem, episode: Episode | undefined, currentTime: number, duration: number) => void;
 }
 
 export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
@@ -24,7 +26,9 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   subscription,
   onOpenSubscriptionModal,
   onNextEpisode,
-  onPrevEpisode
+  onPrevEpisode,
+  initialTime = 0,
+  onProgressUpdate
 }) => {
   if (!isOpen) return null;
 
@@ -55,6 +59,8 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   );
   const [showAudioMenu, setShowAudioMenu] = useState<boolean>(false);
   const [djVoiceBalance, setDjVoiceBalance] = useState<number>(75); // 0-100%
+
+  const lastReportedTimeRef = useRef<number>(0);
 
   // Set default quality based on plan
   useEffect(() => {
@@ -92,8 +98,27 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   // Video progress listeners
   const handleTimeUpdate = () => {
     if (videoRef.current && !isAdPlaying) {
-      setCurrentTime(videoRef.current.currentTime);
-      setDuration(videoRef.current.duration || 100);
+      const cur = videoRef.current.currentTime;
+      const dur = videoRef.current.duration || 100;
+      setCurrentTime(cur);
+      setDuration(dur);
+
+      // Throttled progress reporting every 3 seconds of playback
+      if (onProgressUpdate && Math.abs(cur - lastReportedTimeRef.current) >= 3) {
+        lastReportedTimeRef.current = cur;
+        onProgressUpdate(item, episode, cur, dur);
+      }
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (videoRef.current) {
+      const dur = videoRef.current.duration || 100;
+      setDuration(dur);
+      if (initialTime && initialTime > 0 && initialTime < dur) {
+        videoRef.current.currentTime = initialTime;
+        setCurrentTime(initialTime);
+      }
     }
   };
 
@@ -121,6 +146,18 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     if (videoRef.current) {
       videoRef.current.currentTime = time;
     }
+  };
+
+  const handleClosePlayer = () => {
+    if (videoRef.current && onProgressUpdate && !isAdPlaying) {
+      onProgressUpdate(
+        item,
+        episode,
+        videoRef.current.currentTime,
+        videoRef.current.duration || duration
+      );
+    }
+    onClose();
   };
 
   const handleQualitySelect = (quality: VideoQuality) => {
@@ -152,7 +189,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       <div className="absolute top-0 left-0 right-0 z-30 p-4 sm:p-6 bg-gradient-to-b from-black/90 via-black/50 to-transparent flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button
-            onClick={onClose}
+            onClick={handleClosePlayer}
             className="w-10 h-10 rounded-full bg-neutral-900/80 hover:bg-neutral-800 text-white flex items-center justify-center border border-neutral-700/80 transition-colors"
             aria-label="Exit player"
           >
@@ -212,6 +249,7 @@ export const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           autoPlay
           playsInline
           muted={isMuted}
+          onLoadedMetadata={handleLoadedMetadata}
           onTimeUpdate={handleTimeUpdate}
           onEnded={() => {
             if (isAdPlaying) {

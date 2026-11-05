@@ -1,4 +1,4 @@
-import { DJProfile, Episode, MediaItem, SubscriptionTier, UserSubscription } from '../types';
+import { ContinueWatchingItem, DJProfile, Episode, MediaItem, SubscriptionTier, TopSearchItem, UserSubscription, WatchlistItem } from '../types';
 
 export const DJ_PROFILES: DJProfile[] = [
   // Swahili DJs
@@ -473,6 +473,53 @@ export const MEDIA_CATALOG: MediaItem[] = [
     ]
   },
   {
+    id: 'swa-murphy-comedy',
+    title: 'Vituko Vya Shaolin (Shaolin Laughs)',
+    originalTitle: 'Shaolin Comic Heroes',
+    type: 'movie',
+    language: 'swahili',
+    subCategory: 'movie',
+    djId: 'dj-murphy',
+    djName: 'DJ Murphy',
+    year: 2024,
+    rating: '13+',
+    matchScore: 98,
+    duration: '1h 48m',
+    genres: ['Comedy', 'Martial Arts', 'Action'],
+    synopsis: 'Wanafunzi wawili wa hekalu la Shaolin wenye vituko na uzembe wanajikuta wakitetea kijiji chao dhidi ya wezi wa kuku na majambazi wakorofi. DJ Murphy anakuvunja mbavu kwa vichekesho mwanzo mwisho!',
+    translationNotes: 'DJ Murphy comedy special featuring hilarious East African street jokes and sound effects.',
+    bannerColor: 'from-amber-950 via-emerald-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-amber-700 to-emerald-950',
+    videoUrl: SAMPLE_VIDEOS.action,
+    featured: true,
+    trending: true,
+    audioTracks: [
+      { id: 'swa-murphy-com', label: 'Swahili Comedy Voiceover (DJ Murphy)', type: 'dj_overlay', language: 'sw' }
+    ]
+  },
+  {
+    id: 'music-ost-1',
+    title: 'East Africa Cinema Beats & Bongo Flava Soundtracks',
+    originalTitle: 'CinePulse Studio Anthems Vol 1',
+    type: 'movie',
+    language: 'swahili',
+    subCategory: 'movie',
+    year: 2024,
+    rating: 'All',
+    matchScore: 99,
+    duration: '1h 30m',
+    genres: ['Music', 'Soundtrack', 'Afrobeats'],
+    synopsis: 'Mkusanyiko maalum wa midundo ya filamu, vibao vya Bongo Flava, amapiano na sauti za kitamaduni zinazopatikana kwenye filamu maarufu za DJ Afro na Agasobanuye.',
+    bannerColor: 'from-purple-950 via-rose-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-purple-900 to-rose-950',
+    videoUrl: SAMPLE_VIDEOS.thriller,
+    featured: true,
+    trending: true,
+    audioTracks: [
+      { id: 'ost-audio', label: 'High Fidelity Cinema Master Audio', type: 'original', language: 'sw' }
+    ]
+  },
+  {
     id: 'swa-smith-1',
     title: 'Vita vya Sayari Mpya (Galaxy Vanguard)',
     originalTitle: 'Vanguard 2099',
@@ -865,3 +912,236 @@ export const INITIAL_DOWNLOADS: import('../types').DownloadedItem[] = [
     accountEmail: 'pro.subscriber@cinepulse.io'
   }
 ];
+
+export const INITIAL_WATCHLIST: WatchlistItem[] = [
+  {
+    id: 'wl-swa-afro-1',
+    mediaId: 'swa-afro-1',
+    itemType: 'movie',
+    title: 'Commando ya Mwisho (Final Strike)',
+    subTitle: 'DJ Afro Amigo Swahili Commentary',
+    mediaTitle: 'Commando ya Mwisho',
+    language: 'swahili',
+    djName: 'DJ Afro Amigo',
+    posterBg: 'bg-gradient-to-br from-red-800 to-amber-950',
+    bannerColor: 'from-red-950 via-amber-950 to-neutral-950',
+    matchScore: 99,
+    duration: '2h 10m',
+    year: 2024,
+    rating: '16+',
+    genres: ['Action', 'Martial Arts'],
+    addedAt: 'Yesterday',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    id: 'wl-kin-junior-tv-1-ep-3',
+    mediaId: 'kin-junior-tv-1',
+    itemType: 'episode',
+    title: 'Episode 3: The Ambush',
+    subTitle: 'Agasobanuye by Junior Giti · S1:E3',
+    mediaTitle: 'Ubwami bw\'Abacuruzi b\'Intwaro',
+    episodeId: 'kin-junior-tv-1-ep-3',
+    episodeNumber: 3,
+    seasonNumber: 1,
+    language: 'kinyarwanda',
+    djName: 'Junior Giti',
+    posterBg: 'bg-gradient-to-br from-neutral-800 to-rose-950',
+    bannerColor: 'from-rose-950 via-neutral-900 to-neutral-950',
+    matchScore: 98,
+    duration: '48m',
+    year: 2024,
+    rating: '18+',
+    genres: ['Crime', 'Action'],
+    addedAt: 'Today',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  }
+];
+
+export const INITIAL_CONTINUE_WATCHING: ContinueWatchingItem[] = [
+  {
+    id: 'cw-swa-afro-1',
+    mediaId: 'swa-afro-1',
+    itemType: 'movie',
+    title: 'Commando ya Mwisho (Final Strike)',
+    subTitle: 'DJ Afro Amigo · 35m remaining',
+    mediaTitle: 'Commando ya Mwisho',
+    language: 'swahili',
+    djName: 'DJ Afro Amigo',
+    posterBg: 'bg-gradient-to-br from-red-800 to-amber-950',
+    bannerColor: 'from-red-950 via-amber-950 to-neutral-950',
+    currentTimeSeconds: 4320, // 1h 12m
+    durationSeconds: 7800, // 2h 10m
+    progressPercent: 55,
+    lastWatchedAt: '2 hours ago',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    id: 'cw-kin-junior-tv-1-ep-2',
+    mediaId: 'kin-junior-tv-1',
+    itemType: 'episode',
+    title: 'Episode 2: Shadows in the Mist',
+    subTitle: 'Ubwami · S1:E2 · 19m left',
+    mediaTitle: 'Ubwami bw\'Abacuruzi b\'Intwaro',
+    episodeId: 'kin-junior-tv-1-ep-2',
+    episodeNumber: 2,
+    seasonNumber: 1,
+    language: 'kinyarwanda',
+    djName: 'Junior Giti',
+    posterBg: 'bg-gradient-to-br from-neutral-800 to-rose-950',
+    bannerColor: 'from-rose-950 via-neutral-900 to-neutral-950',
+    currentTimeSeconds: 1560, // 26m
+    durationSeconds: 2700, // 45m
+    progressPercent: 58,
+    lastWatchedAt: 'Yesterday',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    id: 'cw-eng-tv-1-ep-1',
+    mediaId: 'eng-tv-1',
+    itemType: 'episode',
+    title: 'Episode 1: The Reckoning',
+    subTitle: 'Cyber Syndicate: London · 26m left',
+    mediaTitle: 'Cyber Syndicate: London',
+    episodeId: 'eng-tv-1-ep-1',
+    episodeNumber: 1,
+    seasonNumber: 1,
+    language: 'english',
+    posterBg: 'bg-gradient-to-br from-cyan-950 to-blue-950',
+    bannerColor: 'from-cyan-950 via-slate-900 to-neutral-950',
+    currentTimeSeconds: 960, // 16m
+    durationSeconds: 2520, // 42m
+    progressPercent: 38,
+    lastWatchedAt: '3 days ago',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  }
+];
+
+export const TOP_10_SEARCHES: TopSearchItem[] = [
+  {
+    rank: 1,
+    id: 'top-1',
+    mediaId: 'swa-afro-1',
+    title: 'Commando ya Mwisho (Final Strike)',
+    category: 'movie',
+    categoryLabel: 'Movie · Action',
+    subtitle: 'DJ Afro Amigo Voiceover · 99% Match',
+    searchesCount: '1.4M searches',
+    posterBg: 'bg-gradient-to-br from-red-800 to-amber-950',
+    djName: 'DJ Afro Amigo',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    rank: 2,
+    id: 'top-2',
+    mediaId: 'kin-junior-tv-1',
+    title: 'Ubwami bw\'Abacuruzi (The Syndicate)',
+    category: 'series',
+    categoryLabel: 'TV Series · Agasobanuye',
+    subtitle: 'Junior Giti · 8 Episodes · 98% Match',
+    searchesCount: '980K searches',
+    posterBg: 'bg-gradient-to-br from-neutral-800 to-rose-950',
+    djName: 'Junior Giti',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  },
+  {
+    rank: 3,
+    id: 'top-3',
+    mediaId: 'swa-murphy-comedy',
+    title: 'Vituko Vya Shaolin (Shaolin Laughs)',
+    category: 'comedy',
+    categoryLabel: 'Comedy · Kung Fu Humor',
+    subtitle: 'DJ Murphy Comedy Commentary · 98% Match',
+    searchesCount: '870K searches',
+    posterBg: 'bg-gradient-to-br from-amber-700 to-emerald-950',
+    djName: 'DJ Murphy',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    rank: 4,
+    id: 'top-4',
+    mediaId: 'music-ost-1',
+    title: 'East Africa Cinema Beats & Bongo Flava',
+    category: 'music',
+    categoryLabel: 'Music · Soundtracks',
+    subtitle: 'CinePulse Studio Anthems & Film Mixes',
+    searchesCount: '760K searches',
+    posterBg: 'bg-gradient-to-br from-purple-900 to-rose-950',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  },
+  {
+    rank: 5,
+    id: 'top-5',
+    mediaId: 'eng-tv-1',
+    title: 'Cyber Syndicate: London',
+    category: 'series',
+    categoryLabel: 'TV Series · Tech Thriller',
+    subtitle: 'English Studio Dub · 4K UHD · 99% Match',
+    searchesCount: '690K searches',
+    posterBg: 'bg-gradient-to-br from-cyan-950 to-blue-950',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  },
+  {
+    rank: 6,
+    id: 'top-6',
+    mediaId: 'kin-rocky-1',
+    title: 'Umugabo w\'Isezerano (The Iron Vow)',
+    category: 'comedy',
+    categoryLabel: 'Comedy & Action · Agasobanuye',
+    subtitle: 'Rocky Kimomo Voiceover · 99% Match',
+    searchesCount: '630K searches',
+    posterBg: 'bg-gradient-to-br from-amber-600 to-yellow-950',
+    djName: 'Rocky Kimomo',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    rank: 7,
+    id: 'top-7',
+    mediaId: 'fr-action-1',
+    title: 'La Nuit Écarlate (Crimson Night)',
+    category: 'movie',
+    categoryLabel: 'Film · Version Française (VF)',
+    subtitle: 'Action & Thriller · 97% Match',
+    searchesCount: '570K searches',
+    posterBg: 'bg-gradient-to-br from-indigo-950 to-neutral-900',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    rank: 8,
+    id: 'top-8',
+    mediaId: 'swa-afro-2',
+    title: 'Mpiganaji wa Upepo (The Wind Warrior)',
+    category: 'movie',
+    categoryLabel: 'Movie · Martial Arts',
+    subtitle: 'DJ Afro Amigo Commentary · 97% Match',
+    searchesCount: '520K searches',
+    posterBg: 'bg-gradient-to-br from-amber-700 to-red-950',
+    djName: 'DJ Afro Amigo',
+    videoUrl: SAMPLE_VIDEOS.action
+  },
+  {
+    rank: 9,
+    id: 'top-9',
+    mediaId: 'music-ost-2',
+    title: 'Kigali & Nairobi Urban Cinema Anthems',
+    category: 'music',
+    categoryLabel: 'Music · Original Score',
+    subtitle: 'Top Film Scores, Instrumental & Beats',
+    searchesCount: '480K searches',
+    posterBg: 'bg-gradient-to-br from-pink-900 to-amber-950',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  },
+  {
+    rank: 10,
+    id: 'top-10',
+    mediaId: 'swa-afro-tv-1',
+    title: 'Mji wa Damu (Blood City Chronicles)',
+    category: 'series',
+    categoryLabel: 'TV Series · Swahili Action',
+    subtitle: 'DJ Afro Amigo · Ep 1-8 · 98% Match',
+    searchesCount: '440K searches',
+    posterBg: 'bg-gradient-to-br from-red-900 to-stone-950',
+    djName: 'DJ Afro Amigo',
+    videoUrl: SAMPLE_VIDEOS.thriller
+  }
+];
+

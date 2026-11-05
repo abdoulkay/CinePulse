@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Download, Info, Check, Mic, Lock, Tv, Film } from 'lucide-react';
+import { Play, Info, Check, Mic, Lock, Tv, Film, Heart, Download, X } from 'lucide-react';
 import { MediaItem, UserSubscription } from '../types';
 
 interface MediaCardProps {
@@ -9,6 +9,13 @@ interface MediaCardProps {
   onPlay: (item: MediaItem) => void;
   onQuickDownload?: (item: MediaItem) => void;
   isDownloaded?: boolean;
+  isWatchlisted?: boolean;
+  onToggleWatchlist?: (item: MediaItem) => void;
+  progressPercent?: number;
+  remainingTimeText?: string;
+  onRemoveFromProgress?: () => void;
+  episodeSubtitle?: string;
+  episodeNumber?: number;
 }
 
 export const MediaCard: React.FC<MediaCardProps> = ({
@@ -17,85 +24,132 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   onSelect,
   onPlay,
   onQuickDownload,
-  isDownloaded = false
+  isDownloaded = false,
+  isWatchlisted = false,
+  onToggleWatchlist,
+  progressPercent,
+  remainingTimeText,
+  onRemoveFromProgress,
+  episodeSubtitle,
+  episodeNumber
 }) => {
   const isDjTranslated = item.language === 'swahili' || item.language === 'kinyarwanda';
   const isFreeTier = subscription.tier === 'free';
+  const hasProgress = progressPercent !== undefined && progressPercent > 0;
 
   return (
-    <div className="group relative bg-neutral-900 rounded-xl overflow-hidden border border-neutral-800/80 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-xl hover:shadow-black/50">
-      {/* Poster / Artwork Header */}
+    <div className="group relative w-[160px] sm:w-[190px] md:w-[215px] shrink-0 bg-neutral-900 rounded-lg sm:rounded-xl overflow-hidden border border-neutral-800/80 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-black/70 select-none">
+      {/* Poster / Artwork Header (Sleek Netflix 16:9 ratio) */}
       <div 
         onClick={() => onSelect(item)}
-        className={`relative aspect-[16/10] sm:aspect-[16/9] w-full ${item.posterBg} p-4 flex flex-col justify-between cursor-pointer overflow-hidden`}
+        className={`relative aspect-[16/9] w-full ${item.posterBg || 'bg-gradient-to-br from-neutral-800 to-neutral-950'} p-2.5 sm:p-3 flex flex-col justify-between cursor-pointer overflow-hidden`}
       >
         {/* Subtle patterned overlay */}
         <div className="absolute inset-0 bg-radial-gradient opacity-30 pointer-events-none" />
         <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent pointer-events-none" />
 
-        {/* Top Badges */}
+        {/* Top Badges & Watchlist Heart */}
         <div className="relative z-10 flex items-center justify-between gap-1">
           {/* Subcategory or DJ Badge */}
-          {isDjTranslated && item.djName ? (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-950/80 backdrop-blur-md border border-neutral-700/60 text-[11px] font-semibold text-rose-300">
-              <Mic className="w-3 h-3 text-rose-400" />
-              <span className="truncate max-w-[120px]">{item.djName}</span>
+          {episodeNumber ? (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-600/90 text-[10px] font-bold text-white shadow-sm">
+              <span>EP {episodeNumber}</span>
+            </div>
+          ) : isDjTranslated && item.djName ? (
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[10px] font-semibold text-rose-300">
+              <Mic className="w-2.5 h-2.5 text-rose-400" />
+              <span className="truncate max-w-[85px] sm:max-w-[100px]">{item.djName}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-neutral-950/80 backdrop-blur-md border border-neutral-700/60 text-[11px] font-medium text-neutral-300">
-              {item.type === 'tv' ? <Tv className="w-3 h-3 text-cyan-400" /> : <Film className="w-3 h-3 text-amber-400" />}
-              <span className="capitalize">{item.subCategory === 'tv' ? 'TV Series' : 'Movie'}</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[10px] font-medium text-neutral-300">
+              {item.type === 'tv' ? <Tv className="w-2.5 h-2.5 text-cyan-400" /> : <Film className="w-2.5 h-2.5 text-amber-400" />}
+              <span className="capitalize">{item.subCategory === 'tv' ? 'Series' : 'Movie'}</span>
             </div>
           )}
 
-          {/* Quality badge (free tier shows 480p SD limitation tag, Pro tiers show 4K Ultra HD) */}
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-            isFreeTier 
-              ? 'bg-neutral-800/90 text-neutral-400 border border-neutral-700' 
-              : 'bg-gradient-to-r from-amber-500/20 to-rose-500/20 text-amber-300 border border-amber-500/40'
-          }`}>
-            {isFreeTier ? '480p SD (Free)' : '4K Ultra HD (Pro)'}
-          </span>
+          <div className="flex items-center gap-1">
+            {/* If in continue watching, show remove button */}
+            {onRemoveFromProgress ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveFromProgress();
+                }}
+                className="w-6 h-6 rounded-full bg-neutral-950/80 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors"
+                title="Remove from Continue Watching"
+                aria-label="Remove from Continue Watching"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            ) : (
+              /* Heart Bookmark Button */
+              onToggleWatchlist && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleWatchlist(item);
+                  }}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md border transition-all ${
+                    isWatchlisted
+                      ? 'bg-rose-600 border-rose-500 text-white shadow-sm'
+                      : 'bg-neutral-950/80 border-neutral-700/70 text-neutral-300 hover:text-rose-400 hover:border-rose-500/50'
+                  }`}
+                  title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  aria-label={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                >
+                  <Heart className={`w-3 h-3 ${isWatchlisted ? 'fill-current text-white' : ''}`} />
+                </button>
+              )
+            )}
+          </div>
         </div>
 
-        {/* Center Title Art (Always legible and stylistically robust) */}
-        <div className="relative z-10 my-auto text-center px-2 py-4">
-          <h3 className="font-display font-extrabold text-lg sm:text-xl text-white tracking-tight drop-shadow-md line-clamp-2">
+        {/* Center Title Art (Always legible) */}
+        <div className="relative z-10 my-auto text-center px-1">
+          <h4 className="font-display font-extrabold text-xs sm:text-sm text-white tracking-tight drop-shadow-md line-clamp-1">
             {item.title}
-          </h3>
-          {item.originalTitle && (
-            <p className="text-[11px] text-neutral-400 font-medium italic mt-0.5 line-clamp-1">
-              Original: {item.originalTitle}
+          </h4>
+          {episodeSubtitle && (
+            <p className="text-[10px] text-neutral-300 font-medium line-clamp-1 mt-0.5">
+              {episodeSubtitle}
             </p>
           )}
         </div>
 
-        {/* Bottom Metadata Bar */}
-        <div className="relative z-10 flex items-center justify-between text-[11px] text-neutral-300">
-          <div className="flex items-center gap-1.5">
+        {/* Bottom Metadata in Poster */}
+        <div className="relative z-10 flex items-center justify-between text-[10px] text-neutral-300">
+          <div className="flex items-center gap-1">
             <span className="text-emerald-400 font-bold tabular-nums">{item.matchScore}%</span>
             <span>·</span>
-            <span>{item.year}</span>
-            <span>·</span>
-            <span className="px-1 py-0.2 bg-neutral-800 rounded text-[10px] text-neutral-400 font-mono">
-              {item.rating}
-            </span>
+            <span className="text-neutral-400 font-mono text-[9px] px-1 bg-neutral-950/70 rounded">{item.rating}</span>
           </div>
-          <span className="text-neutral-400 text-[11px]">{item.duration}</span>
+          <span className="text-neutral-400 text-[10px]">{item.duration}</span>
         </div>
 
+        {/* RED PROGRESS BAR FOR CONTINUE WATCHING */}
+        {hasProgress && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-neutral-800 z-10">
+            <div 
+              className="h-full bg-rose-600 transition-all duration-300"
+              style={{ width: `${Math.min(100, Math.max(5, progressPercent))}%` }}
+            />
+          </div>
+        )}
+
         {/* Hover Quick Action Overlay */}
-        <div className="absolute inset-0 bg-neutral-950/70 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 z-20">
+        <div className="absolute inset-0 bg-neutral-950/80 backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2 z-20">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onPlay(item);
             }}
-            className="w-10 h-10 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
-            title="Watch now"
+            className="w-9 h-9 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+            title={hasProgress ? `Resume (${remainingTimeText || 'Continue'})` : "Watch now"}
             aria-label="Watch now"
           >
-            <Play className="w-5 h-5 fill-current ml-0.5" />
+            <Play className="w-4 h-4 fill-current ml-0.5" />
           </button>
 
           <button
@@ -103,12 +157,30 @@ export const MediaCard: React.FC<MediaCardProps> = ({
               e.stopPropagation();
               onSelect(item);
             }}
-            className="w-9 h-9 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center border border-neutral-600 hover:scale-105 transition-transform"
-            title="View episodes & details"
-            aria-label="View episodes & details"
+            className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-white flex items-center justify-center border border-neutral-600 hover:scale-105 transition-transform"
+            title="View details"
+            aria-label="View details"
           >
-            <Info className="w-4 h-4" />
+            <Info className="w-3.5 h-3.5" />
           </button>
+
+          {onToggleWatchlist && !onRemoveFromProgress && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleWatchlist(item);
+              }}
+              className={`w-8 h-8 rounded-full flex items-center justify-center border hover:scale-105 transition-transform ${
+                isWatchlisted
+                  ? 'bg-rose-600 border-rose-500 text-white'
+                  : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-600'
+              }`}
+              title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+              aria-label={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            >
+              <Heart className={`w-3.5 h-3.5 ${isWatchlisted ? 'fill-current text-white' : ''}`} />
+            </button>
+          )}
 
           {onQuickDownload && (
             <button
@@ -116,64 +188,49 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                 e.stopPropagation();
                 onQuickDownload(item);
               }}
-              className={`w-9 h-9 rounded-full flex items-center justify-center border hover:scale-105 transition-transform ${
+              className={`w-8 h-8 rounded-full flex items-center justify-center border hover:scale-105 transition-transform ${
                 isDownloaded
                   ? 'bg-emerald-600/30 border-emerald-500 text-emerald-400'
                   : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-600'
               }`}
-              title={isDownloaded ? "Downloaded offline" : "Download offline"}
-              aria-label={isDownloaded ? "Downloaded offline" : "Download offline"}
+              title={isDownloaded ? "Downloaded" : "Download"}
+              aria-label={isDownloaded ? "Downloaded" : "Download"}
             >
-              {isDownloaded ? <Check className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+              {isDownloaded ? <Check className="w-3.5 h-3.5" /> : <Download className="w-3.5 h-3.5" />}
             </button>
           )}
         </div>
       </div>
 
-      {/* Card Details Body */}
-      <div className="p-3.5 flex flex-col flex-grow justify-between gap-2">
+      {/* Sleek Compact Details Below Artwork */}
+      <div className="p-2 sm:p-2.5 flex flex-col justify-between flex-grow gap-1">
         <div>
-          {/* Genre line */}
-          <div className="flex flex-wrap items-center gap-1 text-[11px] text-neutral-400">
-            {item.genres.slice(0, 3).map((genre, idx) => (
-              <React.Fragment key={genre}>
-                <span className="hover:text-neutral-200">{genre}</span>
-                {idx < Math.min(item.genres.length, 3) - 1 && <span className="text-neutral-600">·</span>}
-              </React.Fragment>
-            ))}
-          </div>
+          <h4 
+            onClick={() => onSelect(item)}
+            className="text-xs font-bold text-white hover:text-rose-400 transition-colors line-clamp-1 cursor-pointer"
+            title={item.title}
+          >
+            {item.title}
+          </h4>
 
-          {/* Synopsis snippet */}
-          <p className="text-xs text-neutral-400 line-clamp-2 mt-1 leading-relaxed">
-            {item.synopsis}
-          </p>
-        </div>
-
-        {/* Series Download Quota Note for Free Tier */}
-        {item.type === 'tv' && (
-          <div className="pt-2 border-t border-neutral-800/80 flex items-center justify-between text-[11px]">
-            <span className="text-neutral-400">
-              {item.episodes ? `${item.episodes.length} Episodes available` : 'Full Series'}
+          {/* Subtitle / Genre / DJ note */}
+          <div className="flex items-center justify-between text-[10px] text-neutral-400 mt-0.5">
+            <span className="truncate max-w-[120px]">
+              {hasProgress && remainingTimeText ? (
+                <span className="text-rose-400 font-semibold">{remainingTimeText}</span>
+              ) : isDjTranslated && item.djName ? (
+                <span>{item.djName}</span>
+              ) : (
+                <span>{item.genres[0] || 'Cinema'}</span>
+              )}
             </span>
 
-            {isFreeTier ? (
-              <span className="text-amber-400/90 font-medium flex items-center gap-1" title="Free Tier limit: First 5 episodes only">
-                <Lock className="w-3 h-3 text-amber-400" />
-                <span>Ep 1-5 Free DL</span>
-              </span>
-            ) : (
-              <span className="text-emerald-400 font-medium">All Episodes Unlocked</span>
-            )}
+            {/* Quality pill */}
+            <span className="text-[9px] font-mono text-neutral-500 uppercase font-semibold">
+              {isFreeTier ? '480p' : '4K'}
+            </span>
           </div>
-        )}
-
-        {/* Translation DJ callout if translated */}
-        {isDjTranslated && item.djName && (
-          <div className="pt-1.5 flex items-center justify-between text-[11px] text-neutral-400 border-t border-neutral-800/50">
-            <span className="text-neutral-500">Translation Voice:</span>
-            <span className="text-rose-400 font-medium">{item.djName}</span>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

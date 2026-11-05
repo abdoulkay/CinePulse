@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Play, Download, Check, Lock, Sparkles, Mic, Tv, Film, Info, AlertCircle } from 'lucide-react';
+import { X, Play, Download, Check, Lock, Sparkles, Mic, Tv, Film, Info, AlertCircle, Heart } from 'lucide-react';
 import { Episode, MediaItem, UserSubscription } from '../types';
 import { DJ_PROFILES } from '../data/mockData';
 
@@ -13,6 +13,8 @@ interface MediaDetailModalProps {
   onDownloadMovie: (item: MediaItem) => void;
   downloadedIds: Set<string>;
   onOpenSubscriptionModal: () => void;
+  isItemWatchlisted?: (mediaId: string, episodeId?: string) => boolean;
+  onToggleWatchlist?: (item: MediaItem, episode?: Episode) => void;
 }
 
 export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
@@ -24,7 +26,9 @@ export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
   onDownloadEpisode,
   onDownloadMovie,
   downloadedIds,
-  onOpenSubscriptionModal
+  onOpenSubscriptionModal,
+  isItemWatchlisted,
+  onToggleWatchlist
 }) => {
   if (!isOpen) return null;
 
@@ -96,6 +100,22 @@ export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
                 <Play className="w-4 h-4 fill-current" />
                 <span>{item.type === 'tv' ? 'Play Episode 1' : 'Play Movie'}</span>
               </button>
+
+              {/* Watchlist Toggle for the Movie/Series */}
+              {onToggleWatchlist && (
+                <button
+                  onClick={() => onToggleWatchlist(item)}
+                  className={`px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 border transition-all ${
+                    isItemWatchlisted?.(item.id)
+                      ? 'bg-rose-600/25 border-rose-500 text-rose-300'
+                      : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
+                  }`}
+                  title={isItemWatchlisted?.(item.id) ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                >
+                  <Heart className={`w-4 h-4 ${isItemWatchlisted?.(item.id) ? 'fill-current text-rose-500' : ''}`} />
+                  <span>{isItemWatchlisted?.(item.id) ? 'Watchlisted' : 'Add to Watchlist'}</span>
+                </button>
+              )}
 
               {item.type === 'movie' && (
                 <button
@@ -308,6 +328,22 @@ export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
 
                       {/* Right: Actions */}
                       <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                        {/* Bookmark Episode to Watchlist Button */}
+                        {onToggleWatchlist && (
+                          <button
+                            onClick={() => onToggleWatchlist(item, ep)}
+                            className={`p-1.5 rounded-lg border transition-all ${
+                              isItemWatchlisted?.(item.id, ep.id)
+                                ? 'bg-rose-600/25 border-rose-500 text-rose-400'
+                                : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-rose-400 border-neutral-700'
+                            }`}
+                            title={isItemWatchlisted?.(item.id, ep.id) ? 'Remove episode from Watchlist' : 'Save episode to Watchlist'}
+                            aria-label="Bookmark episode"
+                          >
+                            <Heart className={`w-3.5 h-3.5 ${isItemWatchlisted?.(item.id, ep.id) ? 'fill-current text-rose-500' : ''}`} />
+                          </button>
+                        )}
+
                         {/* Stream / Play Episode Button */}
                         <button
                           onClick={() => {

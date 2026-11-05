@@ -121,3 +121,62 @@ export interface DeviceSessionInfo {
   loginTime: string;
 }
 
+export interface WatchlistItem {
+  id: string; // bookmark ID, e.g. `wl-${mediaId}` or `wl-${mediaId}-ep-${episodeNumber}`
+  mediaId: string;
+  itemType: 'movie' | 'tv' | 'episode';
+  title: string;
+  subTitle?: string;
+  mediaTitle?: string;
+  episodeId?: string;
+  episodeNumber?: number;
+  seasonNumber?: number;
+  language: 'english' | 'french' | 'swahili' | 'kinyarwanda';
+  djName?: string;
+  posterBg: string;
+  bannerColor: string;
+  matchScore: number;
+  duration: string;
+  year: number;
+  rating: string;
+  genres: string[];
+  addedAt: string;
+  videoUrl?: string;
+}
+
+export interface ContinueWatchingItem {
+  id: string; // e.g. `${mediaId}` or `${mediaId}-ep-${episodeId}`
+  mediaId: string;
+  itemType: 'movie' | 'episode';
+  title: string;
+  subTitle?: string;
+  mediaTitle?: string;
+  episodeId?: string;
+  episodeNumber?: number;
+  seasonNumber?: number;
+  language: 'english' | 'french' | 'swahili' | 'kinyarwanda';
+  djName?: string;
+  posterBg: string;
+  bannerColor: string;
+  currentTimeSeconds: number;
+  durationSeconds: number;
+  progressPercent: number; // 0 - 100
+  lastWatchedAt: string;
+  videoUrl: string;
+}
+
+export interface TopSearchItem {
+  rank: number;
+  id: string;
+  mediaId?: string;
+  title: string;
+  category: 'movie' | 'series' | 'music' | 'comedy';
+  categoryLabel: string;
+  subtitle: string;
+  searchesCount: string;
+  posterBg: string;
+  videoUrl?: string;
+  djName?: string;
+}
+
+

@@ -38,6 +38,12 @@ export interface TranslationStrings {
   upgradeToPro: string;
   saveChanges: string;
   close: string;
+  watchlist: string;
+  myWatchlist: string;
+  emptyWatchlist: string;
+  emptyWatchlistDesc: string;
+  addedToWatchlist: string;
+  removedFromWatchlist: string;
 }
 
 export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
@@ -78,7 +84,13 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     freeTierBadge: 'Free Tier',
     upgradeToPro: 'Upgrade to Pro',
     saveChanges: 'Save Changes',
-    close: 'Close'
+    close: 'Close',
+    watchlist: 'My Watchlist',
+    myWatchlist: 'My Watchlist',
+    emptyWatchlist: 'Your watchlist is empty',
+    emptyWatchlistDesc: 'Tap the heart icon on any movie, TV series, or episode to save it here for later.',
+    addedToWatchlist: 'Added to Watchlist',
+    removedFromWatchlist: 'Removed from Watchlist'
   },
   sw: {
     settings: 'Mipangilio',
@@ -117,7 +129,13 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     freeTierBadge: 'Bure (Free)',
     upgradeToPro: 'Jiunge na Pro',
     saveChanges: 'Hifadhi Mipangilio',
-    close: 'Funga'
+    close: 'Funga',
+    watchlist: 'Orodha Yangu',
+    myWatchlist: 'Orodha Yangu ya Kutazama',
+    emptyWatchlist: 'Orodha yako haina filamu bado',
+    emptyWatchlistDesc: 'Bofya alama ya moyo kwenye filamu au kipindi chochote kukihifadhi hapa.',
+    addedToWatchlist: 'Imehifadhiwa kwenye orodha yako',
+    removedFromWatchlist: 'Imeondolewa kwenye orodha yako'
   },
   fr: {
     settings: 'Paramètres',
@@ -156,6 +174,12 @@ export const TRANSLATIONS: Record<AppLanguage, TranslationStrings> = {
     freeTierBadge: 'Gratuit (Free)',
     upgradeToPro: 'Passer à Pro',
     saveChanges: 'Enregistrer',
-    close: 'Fermer'
+    close: 'Fermer',
+    watchlist: 'Ma Liste',
+    myWatchlist: 'Ma Liste de Visionnage',
+    emptyWatchlist: 'Votre liste est vide',
+    emptyWatchlistDesc: 'Appuyez sur l\'icône cœur pour ajouter des films, séries ou épisodes à votre liste.',
+    addedToWatchlist: 'Ajouté à votre liste',
+    removedFromWatchlist: 'Retiré de votre liste'
   }
 };
