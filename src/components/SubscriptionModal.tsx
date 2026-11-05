@@ -1,5 +1,5 @@
-import React from 'react';
-import { X, Check, Sparkles, Smartphone, Tv, Zap, ShieldCheck, CreditCard, Banknote } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Check, Sparkles, Smartphone, Tv, Zap, ShieldCheck, CreditCard, Banknote, ShieldAlert, Clock, AlertTriangle } from 'lucide-react';
 import { SubscriptionTier, UserSubscription } from '../types';
 import { SUBSCRIPTION_PLANS } from '../data/mockData';
 
@@ -18,7 +18,31 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
+  const [warningTier, setWarningTier] = useState<SubscriptionTier | null>(null);
+
   const isFree = currentSubscription.tier === 'free';
+  const daysRemaining = currentSubscription.daysRemaining ?? (isFree ? 0 : 27);
+  const expiryFormatted = currentSubscription.subscriptionExpiryDate 
+    ? new Date(currentSubscription.subscriptionExpiryDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    : 'Dec 5, 2026';
+
+  const handleTierButtonClick = (targetTier: SubscriptionTier) => {
+    // If target tier is same as current tier
+    if (targetTier === currentSubscription.tier) {
+      return;
+    }
+
+    // USER SUBSCRIPTION PROTECTION:
+    // If user is ALREADY an active Pro subscriber and clicks on another paid tier mistakenly
+    if (!isFree && targetTier !== 'free') {
+      setWarningTier(targetTier);
+      return;
+    }
+
+    // Otherwise switch tier
+    onSelectTier(targetTier);
+    onClose();
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-sm overflow-y-auto">
@@ -35,6 +59,69 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
           <X className="w-5 h-5" />
         </button>
 
+        {/* DUPLICATE PAYMENT & SUBSCRIPTION PROTECTION WARNING MODAL */}
+        {warningTier && (
+          <div className="absolute inset-0 z-40 bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
+            <div className="max-w-md w-full bg-neutral-900 border border-amber-500/60 rounded-3xl p-6 sm:p-8 shadow-2xl text-center space-y-4">
+              <div className="w-14 h-14 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center mx-auto">
+                <ShieldAlert className="w-7 h-7" />
+              </div>
+
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                  Subscription Protected
+                </span>
+                <h3 className="font-display font-extrabold text-xl text-white mt-2">
+                  You Are Already a Pro Subscriber!
+                </h3>
+              </div>
+
+              <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 text-xs text-neutral-300 space-y-2 text-left">
+                <div className="flex items-center justify-between text-neutral-400">
+                  <span>Current Active Plan:</span>
+                  <span className="font-bold text-white">{currentSubscription.planName} ({currentSubscription.price})</span>
+                </div>
+                <div className="flex items-center justify-between text-neutral-400">
+                  <span>Days Left on Your Cycle:</span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{daysRemaining} days remaining</span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-neutral-400">
+                  <span>Valid & Active Until:</span>
+                  <span className="font-bold text-neutral-200">{expiryFormatted}</span>
+                </div>
+              </div>
+
+              <p className="text-xs text-neutral-300 leading-relaxed">
+                You do <strong>not</strong> need to subscribe or pay again until your current billing period ends. We protect you from duplicate charges so you never pay twice!
+              </p>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-2.5">
+                <button
+                  onClick={() => setWarningTier(null)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Keep My Current Plan ({daysRemaining}d Left)</span>
+                </button>
+                <button
+                  onClick={() => {
+                    const target = warningTier;
+                    setWarningTier(null);
+                    onSelectTier(target);
+                    onClose();
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold transition-colors"
+                >
+                  Switch Currency Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Modal Banner */}
         <div className="p-6 sm:p-10 text-center space-y-2 bg-gradient-to-b from-neutral-800/60 to-neutral-900 border-b border-neutral-800">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-600/20 border border-rose-500/30 text-rose-400 text-xs font-bold uppercase tracking-wider mb-2">
@@ -50,6 +137,22 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
             Unlock 100% Ad-Free cinema, 4K Ultra HD resolution, and unlimited offline downloads for all series & movies. Available in USD, BIF, or TZS.
           </p>
         </div>
+
+        {/* Active Pro Member Banner with Days Left */}
+        {!isFree && (
+          <div className="bg-gradient-to-r from-emerald-950/70 via-neutral-900 to-emerald-950/70 border-b border-emerald-500/30 px-6 sm:px-10 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2 text-emerald-300">
+              <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span>
+                <strong>Your Pro Subscription is Active:</strong> {currentSubscription.planName} ({currentSubscription.price}/mo) · <strong className="text-white underline">{daysRemaining} days left</strong> until renewal ({expiryFormatted}).
+              </span>
+            </div>
+            <span className="text-[11px] text-emerald-400/90 font-mono bg-emerald-950 px-2 py-0.5 rounded border border-emerald-800/60 flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <span>Duplicate Charge Protection Active</span>
+            </span>
+          </div>
+        )}
 
         {/* Free Mobile Tier Notice / Switcher Strip */}
         <div className="px-6 sm:px-10 py-3.5 bg-neutral-950/80 border-b border-neutral-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
@@ -135,10 +238,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
             <div className="pt-6">
               <button
-                onClick={() => {
-                  onSelectTier('pro_usd');
-                  onClose();
-                }}
+                onClick={() => handleTierButtonClick('pro_usd')}
                 disabled={currentSubscription.tier === 'pro_usd'}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                   currentSubscription.tier === 'pro_usd'
@@ -146,7 +246,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     : 'bg-rose-600 hover:bg-rose-500 text-white hover:scale-[1.02]'
                 }`}
               >
-                {currentSubscription.tier === 'pro_usd' ? 'Currently Active' : 'Select Pro in USD ($3)'}
+                {currentSubscription.tier === 'pro_usd' ? `Currently Active (${daysRemaining}d left)` : 'Select Pro in USD ($3)'}
               </button>
             </div>
           </div>
@@ -207,10 +307,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
             <div className="pt-6">
               <button
-                onClick={() => {
-                  onSelectTier('pro_bif');
-                  onClose();
-                }}
+                onClick={() => handleTierButtonClick('pro_bif')}
                 disabled={currentSubscription.tier === 'pro_bif'}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                   currentSubscription.tier === 'pro_bif'
@@ -218,7 +315,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     : 'bg-amber-600 hover:bg-amber-500 text-white hover:scale-[1.02]'
                 }`}
               >
-                {currentSubscription.tier === 'pro_bif' ? 'Currently Active' : 'Select Pro in BIF (6000 BIF)'}
+                {currentSubscription.tier === 'pro_bif' ? `Currently Active (${daysRemaining}d left)` : 'Select Pro in BIF (6000 BIF)'}
               </button>
             </div>
           </div>
@@ -279,10 +376,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
 
             <div className="pt-6">
               <button
-                onClick={() => {
-                  onSelectTier('pro_tzs');
-                  onClose();
-                }}
+                onClick={() => handleTierButtonClick('pro_tzs')}
                 disabled={currentSubscription.tier === 'pro_tzs'}
                 className={`w-full py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
                   currentSubscription.tier === 'pro_tzs'
@@ -290,7 +384,7 @@ export const SubscriptionModal: React.FC<SubscriptionModalProps> = ({
                     : 'bg-blue-600 hover:bg-blue-500 text-white hover:scale-[1.02]'
                 }`}
               >
-                {currentSubscription.tier === 'pro_tzs' ? 'Currently Active' : 'Select Pro in TZS (3000 Tsh)'}
+                {currentSubscription.tier === 'pro_tzs' ? `Currently Active (${daysRemaining}d left)` : 'Select Pro in TZS (3000 Tsh)'}
               </button>
             </div>
           </div>

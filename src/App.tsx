@@ -4,10 +4,13 @@ import {
   Smartphone, Monitor, Search, Play, ArrowRight, ShieldCheck, Heart, Phone
 } from 'lucide-react';
 import { 
-  AppLanguage, AppTheme, ContinueWatchingItem, DJProfile, DownloadedItem, Episode, Language, MediaItem, 
-  SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality, WatchlistItem 
+  AppLanguage, AppTheme, CommunityUploadItem, ContinueWatchingItem, DJProfile, DownloadedItem, Episode, Language, MediaItem, 
+  MovieRequestItem, SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality, WatchlistItem 
 } from './types';
-import { DJ_PROFILES, MEDIA_CATALOG, SUBSCRIPTION_PLANS, INITIAL_DOWNLOADS, INITIAL_WATCHLIST, INITIAL_CONTINUE_WATCHING } from './data/mockData';
+import { 
+  DJ_PROFILES, MEDIA_CATALOG, SUBSCRIPTION_PLANS, INITIAL_DOWNLOADS, INITIAL_WATCHLIST, 
+  INITIAL_CONTINUE_WATCHING, INITIAL_COMMUNITY_UPLOADS, INITIAL_MOVIE_REQUESTS 
+} from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { CategoryFilterBar } from './components/CategoryFilterBar';
 import { MediaCard } from './components/MediaCard';
@@ -23,6 +26,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { AuthModal } from './components/AuthModal';
 import { SessionConflictModal } from './components/SessionConflictModal';
 import { WatchlistSection } from './components/WatchlistSection';
+import { UploadPortalModal } from './components/UploadPortalModal';
+import { MovieRequestModal } from './components/MovieRequestModal';
 import { TRANSLATIONS } from './utils/i18n';
 
 export default function App() {
@@ -90,6 +95,53 @@ export default function App() {
   const [isDownloadsModalOpen, setIsDownloadsModalOpen] = useState<boolean>(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState<boolean>(false);
   const [isMobileDeviceMode, setIsMobileDeviceMode] = useState<boolean>(false);
+
+  // Dynamic Catalog (Combines base catalog with approved community uploads)
+  const [catalog, setCatalog] = useState<MediaItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_approved_community_media');
+      if (saved) {
+        const approved: MediaItem[] = JSON.parse(saved);
+        return [...approved, ...MEDIA_CATALOG];
+      }
+    } catch {}
+    return MEDIA_CATALOG;
+  });
+
+  // Community Uploads State (Pro submissions for admin review)
+  const [communityUploads, setCommunityUploads] = useState<CommunityUploadItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_community_uploads');
+      return saved ? JSON.parse(saved) : INITIAL_COMMUNITY_UPLOADS;
+    } catch {
+      return INITIAL_COMMUNITY_UPLOADS;
+    }
+  });
+
+  // Movie Requests State (Community requested movies & series)
+  const [movieRequests, setMovieRequests] = useState<MovieRequestItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_movie_requests');
+      return saved ? JSON.parse(saved) : INITIAL_MOVIE_REQUESTS;
+    } catch {
+      return INITIAL_MOVIE_REQUESTS;
+    }
+  });
+
+  // Portal Modals state
+  const [isUploadPortalOpen, setIsUploadPortalOpen] = useState<boolean>(false);
+  const [isMovieRequestModalOpen, setIsMovieRequestModalOpen] = useState<boolean>(false);
+  const [movieRequestSearchPrefill, setMovieRequestSearchPrefill] = useState<string>('');
+
+  // Sync community uploads to localStorage
+  useEffect(() => {
+    localStorage.setItem('cinepulse_community_uploads', JSON.stringify(communityUploads));
+  }, [communityUploads]);
+
+  // Sync movie requests to localStorage
+  useEffect(() => {
+    localStorage.setItem('cinepulse_movie_requests', JSON.stringify(movieRequests));
+  }, [movieRequests]);
 
   // Theme state ('dark' | 'light')
   const [theme, setTheme] = useState<AppTheme>(() => {
@@ -180,10 +232,58 @@ export default function App() {
     const userTierKey = `cinepulse_tier_${user.email}`;
     const savedTier = localStorage.getItem(userTierKey) as SubscriptionTier | null;
     const tierToSet: SubscriptionTier = savedTier || 'pro_usd';
-    const plan = SUBSCRIPTION_PLANS[tierToSet] || SUBSCRIPTION_PLANS.pro_usd;
+    const basePlan = SUBSCRIPTION_PLANS[tierToSet] || SUBSCRIPTION_PLANS.pro_usd;
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 27);
+    const plan: UserSubscription = {
+      ...basePlan,
+      daysRemaining: basePlan.tier === 'free' ? 0 : 27,
+      subscriptionExpiryDate: basePlan.tier === 'free' ? undefined : expiry.toISOString()
+    };
     setSubscription(plan);
     localStorage.setItem('cinepulse_subscription', JSON.stringify(plan));
-    showToast(`Welcome back, ${user.email}! Premium downloads unlocked in ${plan.resolutionLimit.toUpperCase()}.`, 'success');
+    showToast(`Welcome back, ${user.displayName || user.username || user.name || user.email}! Premium downloads unlocked in ${plan.resolutionLimit.toUpperCase()}.`, 'success');
+  };
+
+  // Handler: Update User Profile & Credentials (Username, Display Name, Avatar, Email, Password)
+  const handleUpdateProfile = (updatedFields: Partial<UserAccount>, newPassword?: string) => {
+    if (!currentUser) return;
+    const oldEmail = currentUser.email;
+    const newEmail = updatedFields.email ? updatedFields.email.trim().toLowerCase() : oldEmail;
+
+    const updatedUser: UserAccount = {
+      ...currentUser,
+      ...updatedFields,
+      email: newEmail,
+      lastActive: 'Just now'
+    };
+
+    setCurrentUser(updatedUser);
+    localStorage.setItem('cinepulse_user', JSON.stringify(updatedUser));
+
+    // If email was changed, migrate active session tokens so single-device enforcement stays seamless
+    if (newEmail !== oldEmail) {
+      const activeSession = localStorage.getItem(`cinepulse_active_session_${oldEmail}`) || currentUser.sessionId;
+      const deviceName = localStorage.getItem(`cinepulse_active_device_name_${oldEmail}`) || currentUser.deviceName;
+      localStorage.setItem(`cinepulse_active_session_${newEmail}`, activeSession);
+      localStorage.setItem(`cinepulse_active_device_name_${newEmail}`, deviceName);
+      localStorage.removeItem(`cinepulse_active_session_${oldEmail}`);
+      localStorage.removeItem(`cinepulse_active_device_name_${oldEmail}`);
+
+      // Migrate tier preference key as well
+      const savedTier = localStorage.getItem(`cinepulse_tier_${oldEmail}`);
+      if (savedTier) {
+        localStorage.setItem(`cinepulse_tier_${newEmail}`, savedTier);
+        localStorage.removeItem(`cinepulse_tier_${oldEmail}`);
+      }
+    }
+
+    // Persist new password securely in local storage if updated
+    if (newPassword && newPassword.trim()) {
+      localStorage.setItem(`cinepulse_pwd_${newEmail}`, newPassword.trim());
+    }
+
+    showToast('Profile credentials and settings updated successfully! ✨', 'success');
   };
 
   // Handler: Logout
@@ -246,7 +346,14 @@ export default function App() {
 
   // Change tier handler
   const handleSelectTier = (tier: SubscriptionTier) => {
-    const newPlan = SUBSCRIPTION_PLANS[tier];
+    const basePlan = SUBSCRIPTION_PLANS[tier];
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + 30);
+    const newPlan: UserSubscription = {
+      ...basePlan,
+      daysRemaining: tier === 'free' ? 0 : 30,
+      subscriptionExpiryDate: tier === 'free' ? undefined : expiry.toISOString()
+    };
     setSubscription(newPlan);
     localStorage.setItem('cinepulse_subscription', JSON.stringify(newPlan));
     if (currentUser) {
@@ -260,6 +367,140 @@ export default function App() {
       }`,
       'success'
     );
+  };
+
+  // Handler: Community Movie Upload Submission (Pro Users)
+  const handleUploadSubmit = (uploadData: Omit<CommunityUploadItem, 'id' | 'submittedAt' | 'status'>) => {
+    const newUpload: CommunityUploadItem = {
+      ...uploadData,
+      id: `upload-com-${Date.now()}`,
+      submittedAt: 'Just now',
+      status: 'pending'
+    };
+    setCommunityUploads((prev) => [newUpload, ...prev]);
+    showToast(`"${uploadData.title}" submitted for admin review! Automated duplicate check passed. 🎬`, 'success');
+  };
+
+  // Handler: Admin Approves Community Upload (Publishes live to catalog)
+  const handleApproveUpload = (uploadId: string, adminNotes: string) => {
+    const upload = communityUploads.find(u => u.id === uploadId);
+    if (!upload) return;
+
+    const publishedMediaId = `com-pub-${upload.id}`;
+
+    // Update upload status to approved
+    setCommunityUploads((prev) => prev.map(u => {
+      if (u.id === uploadId) {
+        return {
+          ...u,
+          status: 'approved',
+          reviewedAt: 'Just now',
+          adminReviewer: 'Admin team',
+          adminNotes: adminNotes || 'Approved by admin: Video & audio stream verified.',
+          publishedMediaId
+        };
+      }
+      return u;
+    }));
+
+    // Create live MediaItem in catalog
+    const newMedia: MediaItem = {
+      id: publishedMediaId,
+      title: upload.title,
+      originalTitle: upload.originalTitle,
+      type: upload.type,
+      language: upload.language,
+      subCategory: upload.type,
+      djName: upload.djName,
+      year: upload.year,
+      rating: 'PG-13',
+      matchScore: 98,
+      duration: upload.videoDuration,
+      genres: upload.genres,
+      synopsis: upload.synopsis,
+      translationNotes: `Contributed by community pro ${upload.contributorUsername || upload.contributorName}. Certified 1080p stream.`,
+      bannerColor: 'from-rose-900 via-rose-950 to-neutral-950',
+      posterBg: 'bg-gradient-to-br from-rose-700 via-rose-900 to-neutral-950',
+      videoUrl: upload.videoUrl,
+      audioTracks: [
+        {
+          id: `${publishedMediaId}-audio`,
+          label: upload.djName ? `${upload.djName} Voiceover` : 'Standard Audio',
+          type: upload.djName ? 'dj_overlay' : 'dubbed',
+          language: upload.language
+        }
+      ]
+    };
+
+    setCatalog((prev) => {
+      const next = [newMedia, ...prev.filter(m => m.id !== publishedMediaId)];
+      try {
+        const approvedOnly = next.filter(m => m.id.startsWith('com-pub-'));
+        localStorage.setItem('cinepulse_approved_community_media', JSON.stringify(approvedOnly));
+      } catch {}
+      return next;
+    });
+
+    showToast(`"${upload.title}" approved and published live to CinePulse! ✨`, 'success');
+  };
+
+  // Handler: Admin Rejects Community Upload
+  const handleRejectUpload = (uploadId: string, adminNotes: string) => {
+    const upload = communityUploads.find(u => u.id === uploadId);
+    if (!upload) return;
+
+    setCommunityUploads((prev) => prev.map(u => {
+      if (u.id === uploadId) {
+        return {
+          ...u,
+          status: 'rejected',
+          reviewedAt: 'Just now',
+          adminReviewer: 'Admin team',
+          adminNotes: adminNotes || 'Declined during quality or duplication inspection.'
+        };
+      }
+      return u;
+    }));
+
+    showToast(`Upload "${upload.title}" declined: ${adminNotes || 'Does not meet standards.'}`, 'info');
+  };
+
+  // Handler: Submit Community Movie Request
+  const handleMovieRequestSubmit = (newRequest: Omit<MovieRequestItem, 'id' | 'createdAt' | 'upvotesCount' | 'upvotedByEmails' | 'status'>) => {
+    const req: MovieRequestItem = {
+      ...newRequest,
+      id: `req-${Date.now()}`,
+      createdAt: 'Just now',
+      upvotesCount: 1,
+      upvotedByEmails: [newRequest.requestedByEmail],
+      status: 'requested'
+    };
+    setMovieRequests((prev) => [req, ...prev]);
+    showToast(`Request for "${newRequest.title}" added to the community board! 🗳️`, 'success');
+  };
+
+  // Handler: Upvote Community Movie Request
+  const handleToggleUpvoteRequest = (requestId: string) => {
+    if (!currentUser) {
+      setAuthModalMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setMovieRequests((prev) => prev.map(r => {
+      if (r.id === requestId) {
+        const hasUpvoted = r.upvotedByEmails.includes(currentUser.email);
+        const upvotedByEmails = hasUpvoted
+          ? r.upvotedByEmails.filter(e => e !== currentUser.email)
+          : [...r.upvotedByEmails, currentUser.email];
+        const upvotesCount = hasUpvoted ? Math.max(0, r.upvotesCount - 1) : r.upvotesCount + 1;
+        return {
+          ...r,
+          upvotedByEmails,
+          upvotesCount
+        };
+      }
+      return r;
+    }));
   };
 
   // Set of downloaded IDs for fast lookup
@@ -677,15 +918,15 @@ export default function App() {
   // Extract unique genres across catalog
   const allGenres = useMemo(() => {
     const set = new Set<string>();
-    MEDIA_CATALOG.forEach((item) => {
+    catalog.forEach((item) => {
       item.genres.forEach((g) => set.add(g));
     });
     return Array.from(set).sort();
-  }, []);
+  }, [catalog]);
 
   // Filtered Media items
   const filteredMedia = useMemo(() => {
-    return MEDIA_CATALOG.filter((item) => {
+    return catalog.filter((item) => {
       // Language filter
       if (currentLanguage !== 'all' && item.language !== currentLanguage) {
         return false;
@@ -723,42 +964,42 @@ export default function App() {
 
       return true;
     });
-  }, [currentLanguage, currentSubCategory, selectedDjId, selectedGenre, searchQuery]);
+  }, [catalog, currentLanguage, currentSubCategory, selectedDjId, selectedGenre, searchQuery]);
 
   // Curated category rows for the Netflix-style landing view
   const actionItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.genres.some((g) => ['Action', 'Martial Arts', 'Adventure'].includes(g))),
-    []
+    () => catalog.filter((m) => m.genres.some((g) => ['Action', 'Martial Arts', 'Adventure'].includes(g))),
+    [catalog]
   );
   const comedyItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.genres.includes('Comedy') || m.djName?.includes('Murphy') || m.title.includes('Shaolin') || m.title.includes('Vituko')),
-    []
+    () => catalog.filter((m) => m.genres.includes('Comedy') || m.djName?.includes('Murphy') || m.title.includes('Shaolin') || m.title.includes('Vituko')),
+    [catalog]
   );
   const thrillerItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.genres.some((g) => ['Thriller', 'Crime', 'Mystery', 'Suspense'].includes(g))),
-    []
+    () => catalog.filter((m) => m.genres.some((g) => ['Thriller', 'Crime', 'Mystery', 'Suspense'].includes(g))),
+    [catalog]
   );
   const becauseYouWatchedItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => ['swa-afro-1', 'kin-giti-1', 'swa-murphy-1', 'kin-rocky-2', 'swa-afro-2'].includes(m.id)),
-    []
+    () => catalog.filter((m) => ['swa-afro-1', 'kin-giti-1', 'swa-murphy-1', 'kin-rocky-2', 'swa-afro-2'].includes(m.id)),
+    [catalog]
   );
 
   // Grouped items by language for the catalog
   const kinyarwandaItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.language === 'kinyarwanda'),
-    []
+    () => catalog.filter((m) => m.language === 'kinyarwanda'),
+    [catalog]
   );
   const swahiliItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.language === 'swahili'),
-    []
+    () => catalog.filter((m) => m.language === 'swahili'),
+    [catalog]
   );
   const englishItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.language === 'english'),
-    []
+    () => catalog.filter((m) => m.language === 'english'),
+    [catalog]
   );
   const frenchItems = useMemo(
-    () => MEDIA_CATALOG.filter((m) => m.language === 'french'),
-    []
+    () => catalog.filter((m) => m.language === 'french'),
+    [catalog]
   );
 
   // Main UI Content to be rendered in standard layout or mobile phone simulator
@@ -1207,6 +1448,11 @@ export default function App() {
           onOpenSubscription={() => setIsSubscriptionModalOpen(true)}
           onOpenSettings={() => setIsSettingsModalOpen(true)}
           onOpenSearch={() => setIsSearchModalOpen(true)}
+          onOpenUpload={() => setIsUploadPortalOpen(true)}
+          onOpenRequests={() => {
+            setMovieRequestSearchPrefill('');
+            setIsMovieRequestModalOpen(true);
+          }}
           currentLanguage={currentLanguage}
           onSelectLanguage={setCurrentLanguage}
         >
@@ -1239,6 +1485,12 @@ export default function App() {
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onOpenSearchModal={() => setIsSearchModalOpen(true)}
+            onOpenUploadPortal={() => setIsUploadPortalOpen(true)}
+            onOpenMovieRequestModal={() => {
+              setMovieRequestSearchPrefill('');
+              setIsMovieRequestModalOpen(true);
+            }}
+            pendingUploadsCount={communityUploads.filter(u => u.status === 'pending').length}
             appLanguage={appLanguage}
           />
 
@@ -1260,6 +1512,11 @@ export default function App() {
         onSelectMedia={(item) => setSelectedDetailItem(item)}
         onPlayMedia={(item) => setActivePlayerItem({ item })}
         subscription={subscription}
+        onOpenMovieRequestModal={(query) => {
+          setMovieRequestSearchPrefill(query || '');
+          setIsMovieRequestModalOpen(true);
+        }}
+        onOpenUploadPortal={() => setIsUploadPortalOpen(true)}
       />
 
       {/* Media Detail Modal */}
@@ -1348,7 +1605,7 @@ export default function App() {
         onSelectTier={handleSelectTier}
       />
 
-      {/* Settings Modal (Theme, 3 Languages, Account, Single Device) */}
+      {/* Settings Modal (Theme, 3 Languages, Account, Single Device, Profile & Subscription) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -1357,12 +1614,18 @@ export default function App() {
         appLanguage={appLanguage}
         onSelectAppLanguage={(lang) => setAppLanguage(lang)}
         currentUser={currentUser}
+        subscription={subscription}
+        onOpenSubscriptionModal={() => {
+          setIsSettingsModalOpen(false);
+          setIsSubscriptionModalOpen(true);
+        }}
         onOpenAuthModal={(mode = 'login') => {
           setAuthModalMode(mode);
           setIsAuthModalOpen(true);
         }}
         onLogout={handleLogout}
         onSimulateSecondDeviceLogin={handleSimulateSecondDeviceLogin}
+        onUpdateProfile={handleUpdateProfile}
       />
 
       {/* Email-Only Authentication Modal */}
@@ -1384,6 +1647,47 @@ export default function App() {
           setAuthModalMode('login');
           setIsAuthModalOpen(true);
         }}
+        appLanguage={appLanguage}
+      />
+
+      {/* Community Upload Portal Modal (Pro Submissions & Admin Review Queue) */}
+      <UploadPortalModal
+        isOpen={isUploadPortalOpen}
+        onClose={() => setIsUploadPortalOpen(false)}
+        currentUser={currentUser}
+        subscription={subscription}
+        onOpenSubscriptionModal={() => {
+          setIsUploadPortalOpen(false);
+          setIsSubscriptionModalOpen(true);
+        }}
+        onOpenAuthModal={(mode = 'login') => {
+          setAuthModalMode(mode);
+          setIsAuthModalOpen(true);
+        }}
+        catalog={catalog}
+        communityUploads={communityUploads}
+        onUploadSubmit={handleUploadSubmit}
+        onApproveUpload={handleApproveUpload}
+        onRejectUpload={handleRejectUpload}
+        onPlayMediaItem={(media) => setActivePlayerItem({ item: media })}
+        appLanguage={appLanguage}
+      />
+
+      {/* Community Movie Request Modal (Missing Titles & DJ Translations) */}
+      <MovieRequestModal
+        isOpen={isMovieRequestModalOpen}
+        onClose={() => setIsMovieRequestModalOpen(false)}
+        currentUser={currentUser}
+        onOpenAuthModal={(mode = 'login') => {
+          setAuthModalMode(mode);
+          setIsAuthModalOpen(true);
+        }}
+        requests={movieRequests}
+        onRequestSubmit={handleMovieRequestSubmit}
+        onToggleUpvote={handleToggleUpvoteRequest}
+        onPlayMedia={(media) => setActivePlayerItem({ item: media })}
+        catalog={catalog}
+        initialSearchQuery={movieRequestSearchPrefill}
         appLanguage={appLanguage}
       />
 

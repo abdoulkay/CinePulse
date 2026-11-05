@@ -1,5 +1,5 @@
 import React from 'react';
-import { Film, Download, Sparkles, Smartphone, Monitor, Search, X, Settings, User, LogIn, Heart } from 'lucide-react';
+import { Film, Download, Sparkles, Smartphone, Monitor, Search, X, Settings, User, LogIn, Heart, UploadCloud, HelpCircle } from 'lucide-react';
 import { AppLanguage, Language, UserAccount, UserSubscription } from '../types';
 import { TRANSLATIONS } from '../utils/i18n';
 
@@ -20,6 +20,9 @@ interface NavbarProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onOpenSearchModal?: () => void;
+  onOpenUploadPortal?: () => void;
+  onOpenMovieRequestModal?: () => void;
+  pendingUploadsCount?: number;
   appLanguage: AppLanguage;
 }
 
@@ -40,6 +43,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   searchQuery,
   onSearchChange,
   onOpenSearchModal,
+  onOpenUploadPortal,
+  onOpenMovieRequestModal,
+  pendingUploadsCount = 0,
   appLanguage
 }) => {
   const [showSearchInput, setShowSearchInput] = React.useState(false);
@@ -211,6 +217,37 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
+          {/* Movie Requests Button */}
+          {onOpenMovieRequestModal && (
+            <button
+              onClick={onOpenMovieRequestModal}
+              className="relative p-2 text-neutral-300 hover:text-white hover:bg-neutral-900 rounded-lg transition-colors flex items-center gap-1.5"
+              title="Request a movie or DJ translation"
+              aria-label="Request a movie"
+            >
+              <HelpCircle className="w-4 h-4 text-blue-400" />
+              <span className="hidden xl:inline text-xs font-medium">Requests</span>
+            </button>
+          )}
+
+          {/* Community Upload Portal Button (Pro) */}
+          {onOpenUploadPortal && (
+            <button
+              onClick={onOpenUploadPortal}
+              className="relative p-2 text-neutral-300 hover:text-white hover:bg-neutral-900 rounded-lg transition-colors flex items-center gap-1.5"
+              title="Community Upload Portal (Pro Submissions & Admin Review)"
+              aria-label="Upload movie or episode"
+            >
+              <UploadCloud className="w-4 h-4 text-rose-500" />
+              <span className="hidden xl:inline text-xs font-medium">Upload</span>
+              {pendingUploadsCount > 0 && (
+                <span className="w-4 h-4 rounded-full bg-rose-600 text-[10px] font-bold text-white flex items-center justify-center animate-pulse">
+                  {pendingUploadsCount}
+                </span>
+              )}
+            </button>
+          )}
+
           {/* Device Preview Toggle (Simulate Mobile vs Desktop) */}
           <button
             onClick={onToggleDeviceMode}
@@ -241,11 +278,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="flex items-center gap-1.5 p-1 sm:px-2.5 sm:py-1 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-xs text-neutral-200 transition-colors"
               title={`Logged in as ${currentUser.email}`}
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-rose-600 to-amber-600 text-white font-bold text-[10px] flex items-center justify-center">
-                {currentUser.email.substring(0, 1).toUpperCase()}
-              </div>
+              {currentUser.avatarUrl ? (
+                <img 
+                  src={currentUser.avatarUrl} 
+                  alt={currentUser.displayName || currentUser.name || currentUser.email} 
+                  className="w-6 h-6 rounded-full object-cover border border-rose-500/40"
+                />
+              ) : (
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-rose-600 to-amber-600 text-white font-bold text-[10px] flex items-center justify-center">
+                  {currentUser.email.substring(0, 1).toUpperCase()}
+                </div>
+              )}
               <span className="hidden sm:inline font-medium max-w-[90px] truncate">
-                {currentUser.name || currentUser.email.split('@')[0]}
+                {currentUser.displayName || currentUser.username || currentUser.name || currentUser.email.split('@')[0]}
               </span>
             </button>
           ) : (

@@ -97,6 +97,8 @@ export interface UserSubscription {
   adSupported: boolean;
   devicesAllowed: number;
   billingCycle: 'monthly' | 'yearly';
+  subscriptionExpiryDate?: string;
+  daysRemaining?: number;
 }
 
 export type AppTheme = 'dark' | 'light';
@@ -106,11 +108,15 @@ export type AppLanguage = 'en' | 'sw' | 'fr';
 export interface UserAccount {
   email: string;
   name?: string;
+  username?: string;
+  displayName?: string;
+  avatarUrl?: string;
   createdAt: string;
   sessionId: string;
   deviceId: string;
   deviceName: string;
   lastActive: string;
+  subscriptionExpiryDate?: string;
 }
 
 export interface DeviceSessionInfo {
@@ -178,5 +184,69 @@ export interface TopSearchItem {
   videoUrl?: string;
   djName?: string;
 }
+
+export type UploadReviewStatus = 'pending' | 'approved' | 'rejected';
+
+export interface DuplicateDetectionResult {
+  isPossibleDuplicate: boolean;
+  matchedId?: string;
+  matchedTitle?: string;
+  similarityPercent: number;
+  existingLanguage?: string;
+}
+
+export interface CommunityUploadItem {
+  id: string;
+  contributorEmail: string;
+  contributorName: string;
+  contributorUsername?: string;
+  contributorAvatar?: string;
+  title: string;
+  originalTitle?: string;
+  type: 'movie' | 'tv';
+  episodeNumber?: number;
+  seasonNumber?: number;
+  showTitle?: string;
+  language: 'english' | 'french' | 'swahili' | 'kinyarwanda';
+  djName?: string;
+  genres: string[];
+  year: number;
+  synopsis: string;
+  coverImageUrl: string;
+  videoFileName: string;
+  videoFileSizeMb: number;
+  videoResolution: VideoQuality;
+  videoDuration: string;
+  videoUrl: string;
+  status: UploadReviewStatus;
+  submittedAt: string;
+  reviewedAt?: string;
+  adminReviewer?: string;
+  adminNotes?: string;
+  duplicateCheck?: DuplicateDetectionResult;
+  publishedMediaId?: string;
+}
+
+export type MovieRequestStatus = 'requested' | 'sourcing' | 'added';
+
+export interface MovieRequestItem {
+  id: string;
+  title: string;
+  type: 'movie' | 'tv';
+  requestedByEmail: string;
+  requestedByName: string;
+  requestedByUsername?: string;
+  preferredLanguage: 'english' | 'french' | 'swahili' | 'kinyarwanda' | 'any';
+  preferredDj?: string;
+  releaseYear?: number;
+  notes?: string;
+  upvotesCount: number;
+  upvotedByEmails: string[];
+  status: MovieRequestStatus;
+  createdAt: string;
+  adminResponse?: string;
+  addedMediaId?: string;
+}
+
 
 

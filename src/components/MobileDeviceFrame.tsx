@@ -1,5 +1,5 @@
 import React from 'react';
-import { Smartphone, Monitor, Wifi, Battery, Signal, Film, Home, Compass, Download, Sparkles, Settings, Heart, Search } from 'lucide-react';
+import { Smartphone, Monitor, Wifi, Battery, Signal, Film, Home, Compass, Download, Sparkles, Settings, Heart, Search, UploadCloud, HelpCircle } from 'lucide-react';
 import { Language, UserSubscription } from '../types';
 
 interface MobileDeviceFrameProps {
@@ -13,6 +13,8 @@ interface MobileDeviceFrameProps {
   onOpenSubscription: () => void;
   onOpenSettings: () => void;
   onOpenSearch?: () => void;
+  onOpenUpload?: () => void;
+  onOpenRequests?: () => void;
   currentLanguage: Language;
   onSelectLanguage: (lang: Language) => void;
 }
@@ -28,6 +30,8 @@ export const MobileDeviceFrame: React.FC<MobileDeviceFrameProps> = ({
   onOpenSubscription,
   onOpenSettings,
   onOpenSearch,
+  onOpenUpload,
+  onOpenRequests,
   currentLanguage,
   onSelectLanguage
 }) => {
@@ -122,6 +126,17 @@ export const MobileDeviceFrame: React.FC<MobileDeviceFrameProps> = ({
               </span>
             )}
           </button>
+
+          {onOpenUpload && (
+            <button 
+              onClick={onOpenUpload}
+              className="flex flex-col items-center gap-1 text-[10px] font-medium text-rose-400 hover:text-rose-300 transition-colors"
+              title="Upload Movie (Pro)"
+            >
+              <UploadCloud className="w-4 h-4 text-rose-500" />
+              <span>Upload</span>
+            </button>
+          )}
 
           <button 
             onClick={onOpenSettings}

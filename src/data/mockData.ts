@@ -807,7 +807,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, UserSubscription> = {
     maxDownloadsPerSeries: 'unlimited',
     adSupported: false,
     devicesAllowed: 4,
-    billingCycle: 'monthly'
+    billingCycle: 'monthly',
+    subscriptionExpiryDate: '2026-12-05T00:00:00.000Z',
+    daysRemaining: 27
   },
   pro_bif: {
     tier: 'pro_bif',
@@ -819,7 +821,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, UserSubscription> = {
     maxDownloadsPerSeries: 'unlimited',
     adSupported: false,
     devicesAllowed: 4,
-    billingCycle: 'monthly'
+    billingCycle: 'monthly',
+    subscriptionExpiryDate: '2026-12-05T00:00:00.000Z',
+    daysRemaining: 27
   },
   pro_tzs: {
     tier: 'pro_tzs',
@@ -831,7 +835,9 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, UserSubscription> = {
     maxDownloadsPerSeries: 'unlimited',
     adSupported: false,
     devicesAllowed: 4,
-    billingCycle: 'monthly'
+    billingCycle: 'monthly',
+    subscriptionExpiryDate: '2026-12-05T00:00:00.000Z',
+    daysRemaining: 27
   }
 };
 
@@ -1016,132 +1022,753 @@ export const INITIAL_CONTINUE_WATCHING: ContinueWatchingItem[] = [
   }
 ];
 
-export const TOP_10_SEARCHES: TopSearchItem[] = [
+export const TOP_10_BY_CATEGORY: Record<'movie' | 'shows' | 'music' | 'comedy', TopSearchItem[]> = {
+  movie: [
+    {
+      rank: 1,
+      id: 'top-mov-1',
+      mediaId: 'swa-afro-1',
+      title: 'Commando ya Mwisho (Final Strike)',
+      category: 'movie',
+      categoryLabel: 'Action Blockbuster',
+      subtitle: 'DJ Afro Amigo Voiceover · 99% Match',
+      searchesCount: '1.4M searches',
+      posterBg: 'bg-gradient-to-br from-red-800 to-amber-950',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 2,
+      id: 'top-mov-2',
+      mediaId: 'kin-giti-1',
+      title: 'Extraction: Kigali Mission',
+      category: 'movie',
+      categoryLabel: 'Agasobanuye Action',
+      subtitle: 'Junior Giti Commentary · 98% Match',
+      searchesCount: '1.2M searches',
+      posterBg: 'bg-gradient-to-br from-rose-800 to-neutral-950',
+      djName: 'Junior Giti',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 3,
+      id: 'top-mov-3',
+      mediaId: 'swa-afro-2',
+      title: 'Mpiganaji wa Upepo (The Wind Warrior)',
+      category: 'movie',
+      categoryLabel: 'Martial Arts · Wuxia',
+      subtitle: 'DJ Afro Amigo Commentary · 97% Match',
+      searchesCount: '980K searches',
+      posterBg: 'bg-gradient-to-br from-amber-700 to-red-950',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 4,
+      id: 'top-mov-4',
+      mediaId: 'fr-action-1',
+      title: 'La Nuit Écarlate (Crimson Night)',
+      category: 'movie',
+      categoryLabel: 'Version Française (VF)',
+      subtitle: 'Action & Suspense · 97% Match',
+      searchesCount: '870K searches',
+      posterBg: 'bg-gradient-to-br from-indigo-950 to-neutral-900',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 5,
+      id: 'top-mov-5',
+      mediaId: 'swa-smith-1',
+      title: 'Iron Fist: Dragon Awakening',
+      category: 'movie',
+      categoryLabel: 'Martial Arts & Action',
+      subtitle: 'DJ Smith Voiceover · 96% Match',
+      searchesCount: '780K searches',
+      posterBg: 'bg-gradient-to-br from-yellow-700 to-orange-950',
+      djName: 'DJ Smith',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 6,
+      id: 'top-mov-6',
+      mediaId: 'swa-afro-3',
+      title: 'Night Stalker: Nairobi Secrets',
+      category: 'movie',
+      categoryLabel: 'Crime Mystery Thriller',
+      subtitle: 'DJ Afro Amigo Voiceover · 95% Match',
+      searchesCount: '710K searches',
+      posterBg: 'bg-gradient-to-br from-cyan-950 to-neutral-900',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 7,
+      id: 'top-mov-7',
+      mediaId: 'kin-savimbi-1',
+      title: 'Kigali Confidential (Intambara)',
+      category: 'movie',
+      categoryLabel: 'Agasobanuye Crime Drama',
+      subtitle: 'Savimbi Narrative Translation · 96% Match',
+      searchesCount: '650K searches',
+      posterBg: 'bg-gradient-to-br from-emerald-950 to-neutral-900',
+      djName: 'Savimbi',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 8,
+      id: 'top-mov-8',
+      mediaId: 'kin-young-1',
+      title: "Inzira y'Intwari (Way of the Brave)",
+      category: 'movie',
+      categoryLabel: 'Agasobanuye Action',
+      subtitle: 'DJ Young Voiceover · 94% Match',
+      searchesCount: '590K searches',
+      posterBg: 'bg-gradient-to-br from-teal-950 to-neutral-900',
+      djName: 'DJ Young',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 9,
+      id: 'top-mov-9',
+      mediaId: 'swa-ally-1',
+      title: 'Operation Mombasa: Bahari ya Damu',
+      category: 'movie',
+      categoryLabel: 'Coast Action Thriller',
+      subtitle: 'DJ Ally B Voiceover · 95% Match',
+      searchesCount: '540K searches',
+      posterBg: 'bg-gradient-to-br from-blue-950 to-slate-900',
+      djName: 'DJ Ally B',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 10,
+      id: 'top-mov-10',
+      mediaId: 'eng-action-1',
+      title: 'Shadow Hunters: Tokyo Strike',
+      category: 'movie',
+      categoryLabel: 'English Studio Dub',
+      subtitle: '4K Ultra HD · 98% Match',
+      searchesCount: '490K searches',
+      posterBg: 'bg-gradient-to-br from-purple-950 to-neutral-900',
+      videoUrl: SAMPLE_VIDEOS.action
+    }
+  ],
+  shows: [
+    {
+      rank: 1,
+      id: 'top-sho-1',
+      mediaId: 'kin-junior-tv-1',
+      title: "Ubwami bw'Abacuruzi (The Syndicate)",
+      category: 'series',
+      categoryLabel: 'TV Series · Agasobanuye',
+      subtitle: 'Junior Giti · 8 Full Episodes · 99% Match',
+      searchesCount: '1.3M searches',
+      posterBg: 'bg-gradient-to-br from-neutral-800 to-rose-950',
+      djName: 'Junior Giti',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 2,
+      id: 'top-sho-2',
+      mediaId: 'eng-tv-1',
+      title: 'Cyber Syndicate: London',
+      category: 'series',
+      categoryLabel: 'TV Series · Tech Thriller',
+      subtitle: 'English Studio Dub · Season 1 (Ep 1-6) · 98% Match',
+      searchesCount: '1.1M searches',
+      posterBg: 'bg-gradient-to-br from-cyan-950 to-blue-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 3,
+      id: 'top-sho-3',
+      mediaId: 'swa-afro-tv-1',
+      title: 'Mji wa Damu (Blood City Chronicles)',
+      category: 'series',
+      categoryLabel: 'TV Series · Swahili Action',
+      subtitle: 'DJ Afro Amigo · Episodes 1-8 · 97% Match',
+      searchesCount: '950K searches',
+      posterBg: 'bg-gradient-to-br from-red-900 to-stone-950',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 4,
+      id: 'top-sho-4',
+      mediaId: 'kin-rocky-tv-1',
+      title: 'Kigali Vice: Criminal Records',
+      category: 'series',
+      categoryLabel: 'Crime Investigation Series',
+      subtitle: 'Rocky Kimomo Translation · Season 1 · 98% Match',
+      searchesCount: '890K searches',
+      posterBg: 'bg-gradient-to-br from-amber-900 to-stone-950',
+      djName: 'Rocky Kimomo',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 5,
+      id: 'top-sho-5',
+      mediaId: 'fr-tv-1',
+      title: 'Les Rues Sombres de Paris (Dark Streets)',
+      category: 'series',
+      categoryLabel: 'Série Policière · VF',
+      subtitle: 'Version Française · 10 Épisodes · 96% Match',
+      searchesCount: '790K searches',
+      posterBg: 'bg-gradient-to-br from-blue-950 to-indigo-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 6,
+      id: 'top-sho-6',
+      mediaId: 'swa-murphy-tv-1',
+      title: 'Vita vya Madaraka (Power Struggles)',
+      category: 'series',
+      categoryLabel: 'Swahili Political Drama',
+      subtitle: 'DJ Murphy Voiceover · Episodes 1-8 · 95% Match',
+      searchesCount: '720K searches',
+      posterBg: 'bg-gradient-to-br from-stone-900 to-amber-950',
+      djName: 'DJ Murphy',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 7,
+      id: 'top-sho-7',
+      mediaId: 'kin-savimbi-tv-1',
+      title: 'Umuriro ku Murwa (Fire on the Ridge)',
+      category: 'series',
+      categoryLabel: 'Agasobanuye Action Series',
+      subtitle: 'Savimbi Commentary · Season 1 · 94% Match',
+      searchesCount: '640K searches',
+      posterBg: 'bg-gradient-to-br from-rose-950 to-neutral-900',
+      djName: 'Savimbi',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 8,
+      id: 'top-sho-8',
+      mediaId: 'swa-detective-tv',
+      title: 'The Nairobi Detective Agency',
+      category: 'series',
+      categoryLabel: 'Urban Mystery Series',
+      subtitle: 'DJ Afro Amigo & DJ Smith · 95% Match',
+      searchesCount: '580K searches',
+      posterBg: 'bg-gradient-to-br from-neutral-800 to-blue-950',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 9,
+      id: 'top-sho-9',
+      mediaId: 'eng-sci-tv',
+      title: 'Horizon Squad: Cyber Operations',
+      category: 'series',
+      categoryLabel: 'Sci-Fi Action Series',
+      subtitle: 'English Studio Dub · 4K UHD · 96% Match',
+      searchesCount: '510K searches',
+      posterBg: 'bg-gradient-to-br from-cyan-900 to-slate-950',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 10,
+      id: 'top-sho-10',
+      mediaId: 'kin-sankara-tv-1',
+      title: 'Agasobanuye Warriors: Dynasty',
+      category: 'series',
+      categoryLabel: 'Agasobanuye Martial Arts Series',
+      subtitle: 'Sankara Narration · Ep 1-10 · 93% Match',
+      searchesCount: '470K searches',
+      posterBg: 'bg-gradient-to-br from-red-950 to-neutral-950',
+      djName: 'Sankara',
+      videoUrl: SAMPLE_VIDEOS.action
+    }
+  ],
+  music: [
+    {
+      rank: 1,
+      id: 'top-mus-1',
+      mediaId: 'music-ost-1',
+      title: 'East Africa Cinema Beats & Bongo Flava OST',
+      category: 'music',
+      categoryLabel: 'Music · Soundtracks',
+      subtitle: 'CinePulse Studio Anthems & Film Mixes',
+      searchesCount: '1.5M searches',
+      posterBg: 'bg-gradient-to-br from-purple-900 to-rose-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 2,
+      id: 'top-mus-2',
+      mediaId: 'music-ost-2',
+      title: 'Kigali & Nairobi Urban Cinema Anthems',
+      category: 'music',
+      categoryLabel: 'Music · Original Score',
+      subtitle: 'Top Film Scores, Instrumental & Heavy 808s',
+      searchesCount: '1.2M searches',
+      posterBg: 'bg-gradient-to-br from-pink-900 to-amber-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 3,
+      id: 'top-mus-3',
+      mediaId: 'music-ost-3',
+      title: 'DJ Afro Signature Movie Intro Beats',
+      category: 'music',
+      categoryLabel: 'DJ Soundboard & Hype Beats',
+      subtitle: 'Iconic Kalenjin & Swahili Action Cinema Jingles',
+      searchesCount: '990K searches',
+      posterBg: 'bg-gradient-to-br from-red-900 to-yellow-950',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 4,
+      id: 'top-mus-4',
+      mediaId: 'music-ost-4',
+      title: 'Agasobanuye Battle Drum Themes',
+      category: 'music',
+      categoryLabel: 'Rwandan Cultural Cinema Beats',
+      subtitle: 'Ingoma Drums & Modern Hybrid Film Score',
+      searchesCount: '860K searches',
+      posterBg: 'bg-gradient-to-br from-amber-800 to-neutral-900',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 5,
+      id: 'top-mus-5',
+      mediaId: 'music-ost-5',
+      title: 'Afrobeat Cinematic Chase (Lagos to Dar)',
+      category: 'music',
+      categoryLabel: 'High Speed Action Drums',
+      subtitle: 'Energetic percussion for action chase sequences',
+      searchesCount: '780K searches',
+      posterBg: 'bg-gradient-to-br from-emerald-900 to-cyan-950',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 6,
+      id: 'top-mus-6',
+      mediaId: 'music-ost-6',
+      title: 'Bongo Cinema Ballad & Melodies',
+      category: 'music',
+      categoryLabel: 'Emotional Film Strings',
+      subtitle: 'Tanzanian & Coastal acoustic strings & piano',
+      searchesCount: '690K searches',
+      posterBg: 'bg-gradient-to-br from-teal-900 to-slate-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 7,
+      id: 'top-mus-7',
+      mediaId: 'music-ost-7',
+      title: 'Amapiano Movie Chase Anthems',
+      category: 'music',
+      categoryLabel: 'Log Drum & Deep Bass',
+      subtitle: 'Club & street race high-energy cinema soundtrack',
+      searchesCount: '640K searches',
+      posterBg: 'bg-gradient-to-br from-fuchsia-900 to-purple-950',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 8,
+      id: 'top-mus-8',
+      mediaId: 'music-ost-8',
+      title: "Traditional Inanga & Modern Strings OST",
+      category: 'music',
+      categoryLabel: 'Heritage Rwandan Film Theme',
+      subtitle: "Inanga z'u Rwanda & Orchestral hybrid sound",
+      searchesCount: '580K searches',
+      posterBg: 'bg-gradient-to-br from-blue-900 to-indigo-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 9,
+      id: 'top-mus-9',
+      mediaId: 'music-ost-9',
+      title: 'French VF Cinematic Strings & Piano',
+      category: 'music',
+      categoryLabel: 'Suspense Ambient Score',
+      subtitle: 'Neo-noir atmospheric instrumental soundtrack',
+      searchesCount: '520K searches',
+      posterBg: 'bg-gradient-to-br from-slate-900 to-neutral-950',
+      videoUrl: SAMPLE_VIDEOS.thriller
+    },
+    {
+      rank: 10,
+      id: 'top-mus-10',
+      mediaId: 'music-ost-10',
+      title: 'East African Swahili Club Rhythms',
+      category: 'music',
+      categoryLabel: 'Party & Celebration Mix',
+      subtitle: 'Upbeat African pop & cinema festival tunes',
+      searchesCount: '460K searches',
+      posterBg: 'bg-gradient-to-br from-rose-900 to-amber-950',
+      videoUrl: SAMPLE_VIDEOS.action
+    }
+  ],
+  comedy: [
+    {
+      rank: 1,
+      id: 'top-com-1',
+      mediaId: 'swa-murphy-comedy',
+      title: 'Vituko Vya Shaolin (Shaolin Laughs)',
+      category: 'comedy',
+      categoryLabel: 'Comedy · Kung Fu Humor',
+      subtitle: 'DJ Murphy Comedy Commentary · 99% Match',
+      searchesCount: '1.4M searches',
+      posterBg: 'bg-gradient-to-br from-amber-700 to-emerald-950',
+      djName: 'DJ Murphy',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 2,
+      id: 'top-com-2',
+      mediaId: 'kin-rocky-1',
+      title: "Umugabo w'Isezerano (The Iron Vow)",
+      category: 'comedy',
+      categoryLabel: 'Comedy & Action · Agasobanuye',
+      subtitle: 'Rocky Kimomo Hilarious Punchlines · 99% Match',
+      searchesCount: '1.3M searches',
+      posterBg: 'bg-gradient-to-br from-amber-600 to-yellow-950',
+      djName: 'Rocky Kimomo',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 3,
+      id: 'top-com-3',
+      mediaId: 'swa-afro-comedy-1',
+      title: 'Mlevi wa Mtaa (The Drunken Kung Fu)',
+      category: 'comedy',
+      categoryLabel: 'Martial Arts Parody',
+      subtitle: 'DJ Afro Amigo Uncensored Laughs · 98% Match',
+      searchesCount: '1.1M searches',
+      posterBg: 'bg-gradient-to-br from-red-700 to-amber-900',
+      djName: 'DJ Afro Amigo',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 4,
+      id: 'top-com-4',
+      mediaId: 'swa-smith-comedy',
+      title: 'Bwana Harusi Aliyetoroka (The Runaway Groom)',
+      category: 'comedy',
+      categoryLabel: 'Romantic Comedy Dub',
+      subtitle: 'DJ Smith Hilarious Narratives · 97% Match',
+      searchesCount: '920K searches',
+      posterBg: 'bg-gradient-to-br from-orange-700 to-yellow-900',
+      djName: 'DJ Smith',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 5,
+      id: 'top-com-5',
+      mediaId: 'kin-giti-comedy',
+      title: "Urwenya rw'Abapolisi (Cop Comedy Agasobanuye)",
+      category: 'comedy',
+      categoryLabel: 'Agasobanuye Action Comedy',
+      subtitle: 'Junior Giti Classic Comedy Voiceover · 98% Match',
+      searchesCount: '850K searches',
+      posterBg: 'bg-gradient-to-br from-rose-700 to-amber-950',
+      djName: 'Junior Giti',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 6,
+      id: 'top-com-6',
+      mediaId: 'swa-ally-comedy',
+      title: 'Vituko vya Uswahilini (Neighborhood Pranks)',
+      category: 'comedy',
+      categoryLabel: 'Swahili Street Humor',
+      subtitle: 'DJ Ally B Comedy Voiceover · 96% Match',
+      searchesCount: '760K searches',
+      posterBg: 'bg-gradient-to-br from-yellow-700 to-neutral-900',
+      djName: 'DJ Ally B',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 7,
+      id: 'top-com-7',
+      mediaId: 'kin-savimbi-comedy',
+      title: 'Umunyarwenya wo mu Mujyi (City Comedian)',
+      category: 'comedy',
+      categoryLabel: 'Agasobanuye Parody',
+      subtitle: 'Savimbi Sarcastic Commentary · 95% Match',
+      searchesCount: '690K searches',
+      posterBg: 'bg-gradient-to-br from-emerald-800 to-neutral-900',
+      djName: 'Savimbi',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 8,
+      id: 'top-com-8',
+      mediaId: 'swa-black-comedy',
+      title: 'Kung Fu ya Mchekeshaji (Funny Fist)',
+      category: 'comedy',
+      categoryLabel: 'Action Slapstick',
+      subtitle: 'DJ Black Witty Voiceover · 94% Match',
+      searchesCount: '610K searches',
+      posterBg: 'bg-gradient-to-br from-amber-800 to-rose-950',
+      djName: 'DJ Black',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 9,
+      id: 'top-com-9',
+      mediaId: 'fr-comedy-1',
+      title: 'Les Aventures Comiques de Kigali',
+      category: 'comedy',
+      categoryLabel: 'Comédie · Version Française',
+      subtitle: 'Humour International en Français · 95% Match',
+      searchesCount: '540K searches',
+      posterBg: 'bg-gradient-to-br from-indigo-900 to-neutral-900',
+      videoUrl: SAMPLE_VIDEOS.action
+    },
+    {
+      rank: 10,
+      id: 'top-com-10',
+      mediaId: 'swa-murphy-soccer',
+      title: 'Shaolin Soccer: East African DJ Edition',
+      category: 'comedy',
+      categoryLabel: 'Sports Kung Fu Comedy',
+      subtitle: 'DJ Murphy & Afro Amigo Dub · 98% Match',
+      searchesCount: '480K searches',
+      posterBg: 'bg-gradient-to-br from-lime-800 to-neutral-950',
+      djName: 'DJ Murphy',
+      videoUrl: SAMPLE_VIDEOS.action
+    }
+  ]
+};
+
+export const TOP_10_SEARCHES: TopSearchItem[] = TOP_10_BY_CATEGORY.movie;
+
+// Initial Community Uploads (Pro User Submissions for Admin Review)
+export const INITIAL_COMMUNITY_UPLOADS: import('../types').CommunityUploadItem[] = [
   {
-    rank: 1,
-    id: 'top-1',
-    mediaId: 'swa-afro-1',
-    title: 'Commando ya Mwisho (Final Strike)',
-    category: 'movie',
-    categoryLabel: 'Movie · Action',
-    subtitle: 'DJ Afro Amigo Voiceover · 99% Match',
-    searchesCount: '1.4M searches',
-    posterBg: 'bg-gradient-to-br from-red-800 to-amber-950',
-    djName: 'DJ Afro Amigo',
-    videoUrl: SAMPLE_VIDEOS.action
-  },
-  {
-    rank: 2,
-    id: 'top-2',
-    mediaId: 'kin-junior-tv-1',
-    title: 'Ubwami bw\'Abacuruzi (The Syndicate)',
-    category: 'series',
-    categoryLabel: 'TV Series · Agasobanuye',
-    subtitle: 'Junior Giti · 8 Episodes · 98% Match',
-    searchesCount: '980K searches',
-    posterBg: 'bg-gradient-to-br from-neutral-800 to-rose-950',
+    id: 'upload-com-1',
+    contributorEmail: 'eric.mucyo@kigali.rw',
+    contributorName: 'Eric Mucyo',
+    contributorUsername: '@eric_kgl',
+    contributorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    title: 'Kigali Blackout: Midnight Fugitive',
+    originalTitle: 'The Midnight Fugitive',
+    type: 'movie',
+    language: 'kinyarwanda',
     djName: 'Junior Giti',
-    videoUrl: SAMPLE_VIDEOS.thriller
+    genres: ['Action', 'Thriller', 'Crime'],
+    year: 2025,
+    synopsis: 'When a nationwide grid failure plunges Kigali into darkness, a framed tactical agent must race against corrupt private contractors across Nyarugenge before dawn.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=600&auto=format&fit=crop&q=80',
+    videoFileName: 'Kigali_Blackout_JuniorGiti_1080p.mp4',
+    videoFileSizeMb: 1420,
+    videoResolution: '1080p',
+    videoDuration: '1h 52m',
+    videoUrl: SAMPLE_VIDEOS.action,
+    status: 'pending',
+    submittedAt: 'Today at 09:15 AM',
+    duplicateCheck: {
+      isPossibleDuplicate: false,
+      similarityPercent: 12
+    }
   },
   {
-    rank: 3,
-    id: 'top-3',
-    mediaId: 'swa-murphy-comedy',
-    title: 'Vituko Vya Shaolin (Shaolin Laughs)',
-    category: 'comedy',
-    categoryLabel: 'Comedy · Kung Fu Humor',
-    subtitle: 'DJ Murphy Comedy Commentary · 98% Match',
-    searchesCount: '870K searches',
-    posterBg: 'bg-gradient-to-br from-amber-700 to-emerald-950',
-    djName: 'DJ Murphy',
-    videoUrl: SAMPLE_VIDEOS.action
+    id: 'upload-com-2',
+    contributorEmail: 'kevin.omondi@nairobi.ke',
+    contributorName: 'Kevin Omondi',
+    contributorUsername: '@kevin_254',
+    contributorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    title: 'Tears of Steel: Cyber Resistance',
+    originalTitle: 'Tears of Steel',
+    type: 'movie',
+    language: 'swahili',
+    djName: 'DJ Afro',
+    genres: ['Sci-Fi', 'Action'],
+    year: 2024,
+    synopsis: 'A dystopian battle where human resistance fighters square off against robotic sentinels in a ruined metropolis.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80',
+    videoFileName: 'Tears_of_Steel_DJ_Afro_720p.mp4',
+    videoFileSizeMb: 890,
+    videoResolution: '720p',
+    videoDuration: '1h 38m',
+    videoUrl: SAMPLE_VIDEOS.sciFi,
+    status: 'pending',
+    submittedAt: 'Yesterday at 4:30 PM',
+    duplicateCheck: {
+      isPossibleDuplicate: true,
+      matchedId: 'eng-action-1',
+      matchedTitle: 'Tears of Steel (English Dubbed)',
+      similarityPercent: 88,
+      existingLanguage: 'English'
+    }
   },
   {
-    rank: 4,
-    id: 'top-4',
-    mediaId: 'music-ost-1',
-    title: 'East Africa Cinema Beats & Bongo Flava',
-    category: 'music',
-    categoryLabel: 'Music · Soundtracks',
-    subtitle: 'CinePulse Studio Anthems & Film Mixes',
-    searchesCount: '760K searches',
-    posterBg: 'bg-gradient-to-br from-purple-900 to-rose-950',
-    videoUrl: SAMPLE_VIDEOS.thriller
-  },
-  {
-    rank: 5,
-    id: 'top-5',
-    mediaId: 'eng-tv-1',
-    title: 'Cyber Syndicate: London',
-    category: 'series',
-    categoryLabel: 'TV Series · Tech Thriller',
-    subtitle: 'English Studio Dub · 4K UHD · 99% Match',
-    searchesCount: '690K searches',
-    posterBg: 'bg-gradient-to-br from-cyan-950 to-blue-950',
-    videoUrl: SAMPLE_VIDEOS.thriller
-  },
-  {
-    rank: 6,
-    id: 'top-6',
-    mediaId: 'kin-rocky-1',
-    title: 'Umugabo w\'Isezerano (The Iron Vow)',
-    category: 'comedy',
-    categoryLabel: 'Comedy & Action · Agasobanuye',
-    subtitle: 'Rocky Kimomo Voiceover · 99% Match',
-    searchesCount: '630K searches',
-    posterBg: 'bg-gradient-to-br from-amber-600 to-yellow-950',
-    djName: 'Rocky Kimomo',
-    videoUrl: SAMPLE_VIDEOS.action
-  },
-  {
-    rank: 7,
-    id: 'top-7',
-    mediaId: 'fr-action-1',
-    title: 'La Nuit Écarlate (Crimson Night)',
-    category: 'movie',
-    categoryLabel: 'Film · Version Française (VF)',
-    subtitle: 'Action & Thriller · 97% Match',
-    searchesCount: '570K searches',
-    posterBg: 'bg-gradient-to-br from-indigo-950 to-neutral-900',
-    videoUrl: SAMPLE_VIDEOS.action
-  },
-  {
-    rank: 8,
-    id: 'top-8',
-    mediaId: 'swa-afro-2',
-    title: 'Mpiganaji wa Upepo (The Wind Warrior)',
-    category: 'movie',
-    categoryLabel: 'Movie · Martial Arts',
-    subtitle: 'DJ Afro Amigo Commentary · 97% Match',
-    searchesCount: '520K searches',
-    posterBg: 'bg-gradient-to-br from-amber-700 to-red-950',
-    djName: 'DJ Afro Amigo',
-    videoUrl: SAMPLE_VIDEOS.action
-  },
-  {
-    rank: 9,
-    id: 'top-9',
-    mediaId: 'music-ost-2',
-    title: 'Kigali & Nairobi Urban Cinema Anthems',
-    category: 'music',
-    categoryLabel: 'Music · Original Score',
-    subtitle: 'Top Film Scores, Instrumental & Beats',
-    searchesCount: '480K searches',
-    posterBg: 'bg-gradient-to-br from-pink-900 to-amber-950',
-    videoUrl: SAMPLE_VIDEOS.thriller
-  },
-  {
-    rank: 10,
-    id: 'top-10',
-    mediaId: 'swa-afro-tv-1',
-    title: 'Mji wa Damu (Blood City Chronicles)',
-    category: 'series',
-    categoryLabel: 'TV Series · Swahili Action',
-    subtitle: 'DJ Afro Amigo · Ep 1-8 · 98% Match',
-    searchesCount: '440K searches',
-    posterBg: 'bg-gradient-to-br from-red-900 to-stone-950',
-    djName: 'DJ Afro Amigo',
-    videoUrl: SAMPLE_VIDEOS.thriller
+    id: 'upload-com-3',
+    contributorEmail: 'amina.said@dar.tz',
+    contributorName: 'Amina Said',
+    contributorUsername: '@amina_cinema',
+    contributorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    title: 'Mombasa Nightfall: The Harbour Heist',
+    originalTitle: 'Harbour Heist',
+    type: 'movie',
+    language: 'swahili',
+    djName: 'DJ Ally B',
+    genres: ['Action', 'Crime'],
+    year: 2024,
+    synopsis: 'A crew of underground tech specialists infiltrate the port of Mombasa to intercept an illicit shipping container guarded by foreign mercenaries.',
+    coverImageUrl: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?w=600&auto=format&fit=crop&q=80',
+    videoFileName: 'Mombasa_Nightfall_AllyB_1080p.mp4',
+    videoFileSizeMb: 1650,
+    videoResolution: '1080p',
+    videoDuration: '1h 45m',
+    videoUrl: SAMPLE_VIDEOS.thriller,
+    status: 'approved',
+    submittedAt: '3 days ago',
+    reviewedAt: '2 days ago',
+    adminReviewer: 'Admin team',
+    adminNotes: 'Excellent 1080p audio clarity and authentic Swahili DJ Ally B commentary. Published to catalog.',
+    duplicateCheck: {
+      isPossibleDuplicate: false,
+      similarityPercent: 15
+    },
+    publishedMediaId: 'com-pub-mombasa-heist'
   }
 ];
+
+// Initial Community Movie Requests (Users looking for missing movies/shows)
+export const INITIAL_MOVIE_REQUESTS: import('../types').MovieRequestItem[] = [
+  {
+    id: 'req-1',
+    title: 'Money Heist: Berlin Season 2',
+    type: 'tv',
+    requestedByEmail: 'samuel.bizimana@rwanda.com',
+    requestedByName: 'Samuel Bizimana',
+    requestedByUsername: '@sam_bizi',
+    preferredLanguage: 'kinyarwanda',
+    preferredDj: 'Junior Giti',
+    releaseYear: 2024,
+    notes: 'Please source episodes 1 through 8 translated by Junior Giti or Rocky Kimomo!',
+    upvotesCount: 86,
+    upvotedByEmails: ['user1@demo.com', 'user2@demo.com'],
+    status: 'sourcing',
+    createdAt: '2 days ago',
+    adminResponse: 'In progress: Studio master received, translation by Junior Giti underway for early release next week.'
+  },
+  {
+    id: 'req-2',
+    title: 'Extraction 2 (Swahili DJ Afro Commentary)',
+    type: 'movie',
+    requestedByEmail: 'brian.kip@nairobi.ke',
+    requestedByName: 'Brian Kiprono',
+    requestedByUsername: '@brian_ke',
+    preferredLanguage: 'swahili',
+    preferredDj: 'DJ Afro',
+    releaseYear: 2023,
+    notes: 'Looking for the complete uncut fight scene with DJ Afro voiceover.',
+    upvotesCount: 114,
+    upvotedByEmails: ['user3@demo.com'],
+    status: 'requested',
+    createdAt: 'Yesterday'
+  },
+  {
+    id: 'req-3',
+    title: 'John Wick: Chapter 4 (French Version Complète)',
+    type: 'movie',
+    requestedByEmail: 'claire.dubois@paris.fr',
+    requestedByName: 'Claire Dubois',
+    requestedByUsername: '@claire_d',
+    preferredLanguage: 'french',
+    releaseYear: 2023,
+    notes: 'High definition 1080p French European dub.',
+    upvotesCount: 47,
+    upvotedByEmails: [],
+    status: 'added',
+    createdAt: '5 days ago',
+    adminResponse: 'Added to CinePulse! You can stream it now under French Dubbed cinema.',
+    addedMediaId: 'fr-movie-1'
+  },
+  {
+    id: 'req-4',
+    title: 'Lupin Season 3 (Swahili Dubbed)',
+    type: 'tv',
+    requestedByEmail: 'rashid.m@zanzibar.tz',
+    requestedByName: 'Rashid Mohamed',
+    requestedByUsername: '@rashid_znz',
+    preferredLanguage: 'swahili',
+    preferredDj: 'DJ Murphy',
+    releaseYear: 2023,
+    notes: 'All 7 episodes in Swahili please!',
+    upvotesCount: 63,
+    upvotedByEmails: [],
+    status: 'requested',
+    createdAt: '3 days ago'
+  }
+];
+
+// Smart duplicate detection helper
+export function checkCatalogDuplicate(
+  candidateTitle: string,
+  catalog: import('../types').MediaItem[]
+): import('../types').DuplicateDetectionResult {
+  if (!candidateTitle || !candidateTitle.trim()) {
+    return { isPossibleDuplicate: false, similarityPercent: 0 };
+  }
+
+  const clean = (s: string) => 
+    s.toLowerCase()
+     .replace(/[^a-z0-9\s]/g, '')
+     .replace(/\b(the|a|an|dj|dubbed|agasobanuye|edition|hd|4k|version|complete|movie|film)\b/g, '')
+     .trim()
+     .replace(/\s+/g, ' ');
+
+  const target = clean(candidateTitle);
+  if (!target) return { isPossibleDuplicate: false, similarityPercent: 0 };
+
+  let maxSimilarity = 0;
+  let matchedItem: import('../types').MediaItem | null = null;
+
+  for (const item of catalog) {
+    const itemClean = clean(item.title);
+    if (!itemClean) continue;
+
+    // Exact or substring match
+    if (target === itemClean) {
+      return {
+        isPossibleDuplicate: true,
+        matchedId: item.id,
+        matchedTitle: item.title,
+        similarityPercent: 99,
+        existingLanguage: item.language
+      };
+    }
+
+    if (itemClean.includes(target) || target.includes(itemClean)) {
+      const sim = Math.round((Math.min(target.length, itemClean.length) / Math.max(target.length, itemClean.length)) * 100);
+      if (sim > maxSimilarity) {
+        maxSimilarity = sim;
+        matchedItem = item;
+      }
+    }
+
+    // Word overlap match
+    const targetWords = new Set(target.split(' ').filter(w => w.length > 2));
+    const itemWords = new Set(itemClean.split(' ').filter(w => w.length > 2));
+    if (targetWords.size > 0 && itemWords.size > 0) {
+      let intersection = 0;
+      targetWords.forEach(w => {
+        if (itemWords.has(w)) intersection++;
+      });
+      const diceSim = Math.round((2 * intersection / (targetWords.size + itemWords.size)) * 100);
+      if (diceSim > maxSimilarity) {
+        maxSimilarity = diceSim;
+        matchedItem = item;
+      }
+    }
+  }
+
+  return {
+    isPossibleDuplicate: maxSimilarity >= 65,
+    matchedId: matchedItem ? matchedItem.id : undefined,
+    matchedTitle: matchedItem ? matchedItem.title : undefined,
+    similarityPercent: maxSimilarity,
+    existingLanguage: matchedItem ? matchedItem.language : undefined
+  };
+}
+
 
