@@ -1,0 +1,6 @@
+{
+  "name": "CinePulse Streaming",
+  "description": "Multilingual movie and TV series streaming platform featuring English and French dubbed cinema alongside Swahili and Kinyarwanda DJ-translated Agasobanuye releases, with tiered subscription, ad-supported mobile free tier, and offline downloads.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
