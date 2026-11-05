@@ -123,7 +123,13 @@ export const MediaCard: React.FC<MediaCardProps> = ({
           <div className="flex items-center gap-1">
             <span className="text-emerald-400 font-bold tabular-nums">{item.matchScore}%</span>
             <span>·</span>
-            <span className="text-neutral-400 font-mono text-[9px] px-1 bg-neutral-950/70 rounded">{item.rating}</span>
+            <span className={`font-mono text-[9px] px-1 rounded flex items-center gap-0.5 ${
+              item.isAdult || item.rating === '18+'
+                ? 'bg-rose-600/90 text-white font-bold'
+                : 'bg-neutral-950/70 text-neutral-300'
+            }`}>
+              {item.rating}
+            </span>
           </div>
           <span className="text-neutral-400 text-[10px]">{item.duration}</span>
         </div>

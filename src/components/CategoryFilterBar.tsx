@@ -1,6 +1,6 @@
 import React from 'react';
-import { Mic2, Radio, Check, Layers, SlidersHorizontal } from 'lucide-react';
-import { DJProfile, Language, SubCategory } from '../types';
+import { Mic2, Radio, Check, Layers, SlidersHorizontal, Lock, Flame } from 'lucide-react';
+import { DJProfile, Language, ParentalControlsConfig, SubCategory } from '../types';
 import { DJ_PROFILES } from '../data/mockData';
 
 interface CategoryFilterBarProps {
@@ -13,6 +13,9 @@ interface CategoryFilterBarProps {
   selectedGenre: string;
   onSelectGenre: (genre: string) => void;
   allGenres: string[];
+  parentalControls?: ParentalControlsConfig;
+  onOpenParentalSettings?: () => void;
+  onToggleAdultVault?: () => void;
 }
 
 export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
@@ -24,7 +27,10 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   onSelectDj,
   selectedGenre,
   onSelectGenre,
-  allGenres
+  allGenres,
+  parentalControls,
+  onOpenParentalSettings,
+  onToggleAdultVault
 }) => {
   // Filter DJs by the active language (Swahili or Kinyarwanda)
   const availableDjs = DJ_PROFILES.filter(
@@ -105,8 +111,42 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           </button>
         </div>
 
-        {/* Quick Genre Dropdown / Filter Indicator */}
-        <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-auto">
+        {/* Quick Genre Dropdown, Parental Rating Status & 18+ Vault Trigger */}
+        <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 self-end sm:self-auto">
+          {parentalControls && onOpenParentalSettings && (
+            <button
+              type="button"
+              onClick={onOpenParentalSettings}
+              className="px-2.5 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 text-[11px] font-medium text-neutral-300 flex items-center gap-1.5 transition-colors min-h-[36px]"
+              title="Parental Controls & Rating PIN Settings"
+            >
+              <Lock className="w-3 h-3 text-amber-400" />
+              <span>
+                {parentalControls.enabled ? `Max: ${parentalControls.maxRating}` : 'Parental Off'}
+              </span>
+            </button>
+          )}
+
+          {onToggleAdultVault && (
+            <button
+              type="button"
+              onClick={onToggleAdultVault}
+              className={`px-2.5 py-1.5 rounded-lg border text-[11px] font-bold flex items-center gap-1.5 transition-all min-h-[36px] ${
+                parentalControls?.hiddenAdultVaultUnlocked && !parentalControls?.filterAdultContent
+                  ? 'bg-rose-600/25 border-rose-500 text-rose-300 shadow-sm'
+                  : 'bg-neutral-900 hover:bg-neutral-800 border-neutral-800 text-neutral-400 hover:text-rose-400'
+              }`}
+              title="18+ Hidden Adult Movies Vault (PIN & Age Confirmation Required)"
+            >
+              <Flame className="w-3.5 h-3.5 text-rose-500" />
+              <span>
+                {parentalControls?.hiddenAdultVaultUnlocked && !parentalControls?.filterAdultContent
+                  ? '18+ Vault Unlocked'
+                  : '18+ Vault'}
+              </span>
+            </button>
+          )}
+
           <div className="flex items-center gap-1.5 text-xs text-neutral-400">
             <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
             <select

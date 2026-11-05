@@ -32,6 +32,17 @@ export interface Episode {
   videoUrl: string;
 }
 
+export type ContentRating = 'G' | 'PG' | 'PG-13' | 'R' | '18+';
+
+export interface ParentalControlsConfig {
+  enabled: boolean;
+  pin: string; // 4-digit PIN e.g. '1234'
+  maxRating: ContentRating;
+  filterAdultContent: boolean;
+  ageConfirmed18Plus: boolean;
+  hiddenAdultVaultUnlocked: boolean;
+}
+
 export interface MediaItem {
   id: string;
   title: string;
@@ -43,6 +54,7 @@ export interface MediaItem {
   djName?: string;
   year: number;
   rating: string;
+  isAdult?: boolean;
   matchScore: number;
   duration: string;
   genres: string[];

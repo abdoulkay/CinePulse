@@ -3,9 +3,10 @@ import {
   X, Moon, Sun, Globe, User, LogIn, LogOut, ShieldCheck, 
   Smartphone, AlertTriangle, Monitor, Check, ExternalLink,
   Camera, Lock, Key, Clock, Sparkles, Mail, AtSign, CheckCircle2,
-  RefreshCw, ShieldAlert, Award, Edit3, ChevronDown, ChevronUp
+  RefreshCw, ShieldAlert, Award, Edit3, ChevronDown, ChevronUp,
+  Flame, Eye, EyeOff, Unlock
 } from 'lucide-react';
-import { AppLanguage, AppTheme, UserAccount, UserSubscription } from '../types';
+import { AppLanguage, AppTheme, ContentRating, ParentalControlsConfig, UserAccount, UserSubscription } from '../types';
 import { TRANSLATIONS } from '../utils/i18n';
 
 interface SettingsModalProps {
@@ -22,6 +23,9 @@ interface SettingsModalProps {
   onLogout: () => void;
   onSimulateSecondDeviceLogin: () => void;
   onUpdateProfile?: (updatedUser: Partial<UserAccount>, newPassword?: string) => void;
+  parentalControls: ParentalControlsConfig;
+  onUpdateParentalControls: (updated: Partial<ParentalControlsConfig>) => void;
+  onJumpToAdultVault?: () => void;
 }
 
 const AVATAR_PRESETS = [
@@ -46,7 +50,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onOpenAuthModal,
   onLogout,
   onSimulateSecondDeviceLogin,
-  onUpdateProfile
+  onUpdateProfile,
+  parentalControls,
+  onUpdateParentalControls,
+  onJumpToAdultVault
 }) => {
   if (!isOpen) return null;
 
@@ -79,6 +86,45 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   
   // Status message
   const [statusMessage, setStatusMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  // Parental Controls PIN Unlock & Configuration States
+  const [isParentalUnlocked, setIsParentalUnlocked] = useState<boolean>(false);
+  const [pinInput, setPinInput] = useState<string>('');
+  const [pinError, setPinError] = useState<string | null>(null);
+  const [showChangePinForm, setShowChangePinForm] = useState<boolean>(false);
+  const [newPinValue, setNewPinValue] = useState<string>('');
+  const [confirmPinValue, setConfirmPinValue] = useState<string>('');
+  const [parentalSuccessMsg, setParentalSuccessMsg] = useState<string | null>(null);
+
+  const handleUnlockParentalControls = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === parentalControls.pin) {
+      setIsParentalUnlocked(true);
+      setPinError(null);
+      setPinInput('');
+    } else {
+      setPinError('Incorrect 4-digit PIN. Try again.');
+    }
+  };
+
+  const handleSaveNewPin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{4}$/.test(newPinValue)) {
+      setPinError('New PIN must be exactly 4 numeric digits (0-9).');
+      return;
+    }
+    if (newPinValue !== confirmPinValue) {
+      setPinError('New PIN and confirmation do not match.');
+      return;
+    }
+    onUpdateParentalControls({ pin: newPinValue });
+    setNewPinValue('');
+    setConfirmPinValue('');
+    setShowChangePinForm(false);
+    setPinError(null);
+    setParentalSuccessMsg('4-digit Parental Controls PIN updated!');
+    setTimeout(() => setParentalSuccessMsg(null), 3000);
+  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -730,7 +776,371 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* ================= SECTION 5: SINGLE DEVICE SECURITY ENFORCEMENT ================= */}
+          {/* ================= SECTION 5: PIN-PROTECTED PARENTAL CONTROLS & ADULT CONTENT ================= */}
+          <div className="space-y-3 pt-4 border-t border-neutral-800">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-rose-500" />
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  Parental Controls & Adult Content (PIN-Protected)
+                </h3>
+              </div>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-mono font-bold border ${
+                  parentalControls.enabled
+                    ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                    : 'bg-neutral-800 text-neutral-400 border-neutral-700'
+                }`}
+              >
+                {parentalControls.enabled ? `Max Rating: ${parentalControls.maxRating}` : 'Controls Off'}
+              </span>
+            </div>
+
+            {!isParentalUnlocked ? (
+              /* LOCKED PARENTAL CONTROLS VIEW - REQUIRES 4-DIGIT PIN */
+              <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-rose-600/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-white">
+                        Parental Controls Locked by 4-Digit PIN
+                      </h4>
+                      <p className="text-[11px] text-neutral-400 mt-0.5 leading-relaxed">
+                        Current Max Rating: <strong className="text-amber-400 font-mono">{parentalControls.maxRating}</strong> ·
+                        Adult Filter: <strong className="text-white">{parentalControls.filterAdultContent ? 'Active (Hidden)' : 'Off'}</strong> ·
+                        18+ Age Verified: <strong className="text-white">{parentalControls.ageConfirmed18Plus ? 'Yes' : 'No'}</strong>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handleUnlockParentalControls} className="space-y-2.5 pt-2 border-t border-neutral-800/80">
+                  <label className="block text-[11px] font-semibold text-neutral-300">
+                    Enter 4-Digit PIN to Modify Parental Controls or Unlock Hidden Adult Section:
+                  </label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      maxLength={4}
+                      value={pinInput}
+                      onChange={(e) => {
+                        setPinInput(e.target.value.replace(/\D/g, '').slice(0, 4));
+                        setPinError(null);
+                      }}
+                      placeholder="•••• (4-digit PIN)"
+                      className="w-40 bg-neutral-900 border border-neutral-700 focus:border-rose-500 rounded-xl px-3.5 py-2 text-sm text-white font-mono tracking-widest focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md"
+                    >
+                      <Unlock className="w-3.5 h-3.5" />
+                      <span>Unlock Parental Controls</span>
+                    </button>
+                    {parentalControls.pin === '1234' && (
+                      <span className="text-[11px] text-neutral-500 font-mono">
+                        Default PIN: <strong className="text-neutral-300">1234</strong>
+                      </span>
+                    )}
+                  </div>
+
+                  {pinError && (
+                    <p className="text-xs text-rose-400 flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                      <span>{pinError}</span>
+                    </p>
+                  )}
+                </form>
+              </div>
+            ) : (
+              /* UNLOCKED PARENTAL CONTROLS & ADULT VAULT MANAGEMENT PANEL */
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-b from-neutral-950 via-neutral-900/90 to-neutral-950 border border-rose-500/40 space-y-5 animate-fadeIn">
+                {/* Top Status & Lock Button */}
+                <div className="flex items-center justify-between border-b border-neutral-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs font-bold text-emerald-400">
+                      PIN Verified · Parental Controls Unlocked
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsParentalUnlocked(false);
+                      setShowChangePinForm(false);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-[11px] font-semibold text-neutral-300 flex items-center gap-1"
+                  >
+                    <Lock className="w-3 h-3" />
+                    <span>Lock Panel</span>
+                  </button>
+                </div>
+
+                {parentalSuccessMsg && (
+                  <div className="p-2.5 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>{parentalSuccessMsg}</span>
+                  </div>
+                )}
+
+                {/* 1. Enable / Disable Rating PIN Requirement */}
+                <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                  <div>
+                    <h4 className="text-xs font-bold text-white">Require 4-Digit PIN for Restricted Ratings</h4>
+                    <p className="text-[11px] text-neutral-400 mt-0.5">
+                      When enabled, any movie or episode exceeding your Maximum Rating below requires your 4-digit PIN before playback.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onUpdateParentalControls({ enabled: !parentalControls.enabled })}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all shrink-0 ${
+                      parentalControls.enabled
+                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
+                        : 'bg-neutral-800 border-neutral-700 text-neutral-400'
+                    }`}
+                  >
+                    {parentalControls.enabled ? 'Enabled' : 'Disabled'}
+                  </button>
+                </div>
+
+                {/* 2. Maximum Allowed Content Rating Selector (G, PG, PG-13, R, 18+) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-white">
+                      Maximum Allowed Content Rating (Before PIN Required)
+                    </label>
+                    <span className="text-[11px] font-mono text-amber-400">
+                      Selected: {parentalControls.maxRating}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {(
+                      [
+                        { rating: 'G', desc: 'All Ages' },
+                        { rating: 'PG', desc: 'Kids 10+' },
+                        { rating: 'PG-13', desc: 'Teens 13+' },
+                        { rating: 'R', desc: 'Mature 16+' },
+                        { rating: '18+', desc: 'Adult 18+' }
+                      ] as { rating: ContentRating; desc: string }[]
+                    ).map((item) => {
+                      const isSelected = parentalControls.maxRating === item.rating;
+                      return (
+                        <button
+                          key={item.rating}
+                          type="button"
+                          onClick={() => onUpdateParentalControls({ maxRating: item.rating })}
+                          className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between ${
+                            isSelected
+                              ? 'bg-rose-600/25 border-rose-500 text-white ring-2 ring-rose-500/20'
+                              : 'bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-extrabold text-xs text-white">{item.rating}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-rose-400" />}
+                          </div>
+                          <span className="text-[10px] text-neutral-400 mt-1">{item.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-neutral-500">
+                    Titles rated higher than <strong className="text-neutral-300">{parentalControls.maxRating}</strong> will prompt for your 4-digit PIN when Play is pressed.
+                  </p>
+                </div>
+
+                {/* 3. Age Confirmation (18+) & Adult Content Filter */}
+                <div className="space-y-3 pt-2 border-t border-neutral-800/80">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Age Confirmation & Adult Content Filter</span>
+                  </h4>
+
+                  {/* Age Confirmation Checkbox / Toggle */}
+                  <label className="flex items-start justify-between gap-4 p-3 rounded-xl bg-neutral-950 border border-neutral-800 cursor-pointer hover:border-neutral-700 transition-colors">
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        18+ Age Confirmation (Verify Legal Adult Age)
+                      </span>
+                      <span className="text-[11px] text-neutral-400 block mt-0.5">
+                        I confirm that I am at least 18 years old and legally permitted to access mature 18+ content.
+                      </span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={parentalControls.ageConfirmed18Plus}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        onUpdateParentalControls({
+                          ageConfirmed18Plus: checked,
+                          // If unchecking age confirmation, automatically re-enable adult filter and lock hidden vault
+                          ...(checked ? {} : { filterAdultContent: true, hiddenAdultVaultUnlocked: false })
+                        });
+                      }}
+                      className="mt-1 w-4 h-4 rounded accent-rose-600 cursor-pointer shrink-0"
+                    />
+                  </label>
+
+                  {/* Filter Adult Content Toggle */}
+                  <div className="flex items-center justify-between gap-4 p-3 rounded-xl bg-neutral-950 border border-neutral-800">
+                    <div>
+                      <span className="text-xs font-bold text-white block">
+                        Filter Adult Content (Hide 18+ Titles in App)
+                      </span>
+                      <span className="text-[11px] text-neutral-400 block mt-0.5">
+                        When ON, all 18+ adult movies are filtered out of the catalog and search results.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextFilter = !parentalControls.filterAdultContent;
+                        onUpdateParentalControls({
+                          filterAdultContent: nextFilter,
+                          ...(nextFilter ? { hiddenAdultVaultUnlocked: false } : {})
+                        });
+                      }}
+                      className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all shrink-0 ${
+                        parentalControls.filterAdultContent
+                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+                          : 'bg-neutral-800 border-neutral-700 text-neutral-300'
+                      }`}
+                    >
+                      {parentalControls.filterAdultContent ? 'Filtered (Safe)' : 'Unfiltered'}
+                    </button>
+                  </div>
+
+                  {/* Hidden Adult Movies Section (18+ Vault) Reveal Control */}
+                  <div className="p-3.5 rounded-xl bg-gradient-to-r from-rose-950/40 via-neutral-950 to-fuchsia-950/30 border border-rose-500/30 space-y-2.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <span className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                          <Flame className="w-3.5 h-3.5 text-rose-500" />
+                          <span>Hidden Adult Movies Section (18+ Vault)</span>
+                        </span>
+                        <p className="text-[11px] text-neutral-400 mt-0.5">
+                          {parentalControls.hiddenAdultVaultUnlocked && !parentalControls.filterAdultContent
+                            ? 'The Hidden Adult Movies Section is currently UNLOCKED and visible in the main catalog.'
+                            : 'Unlock to reveal the private 18+ adult movies vault in the main catalog.'}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!parentalControls.hiddenAdultVaultUnlocked) {
+                              onUpdateParentalControls({
+                                ageConfirmed18Plus: true,
+                                filterAdultContent: false,
+                                hiddenAdultVaultUnlocked: true
+                              });
+                            } else {
+                              onUpdateParentalControls({
+                                hiddenAdultVaultUnlocked: false
+                              });
+                            }
+                          }}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 border transition-all ${
+                            parentalControls.hiddenAdultVaultUnlocked && !parentalControls.filterAdultContent
+                              ? 'bg-rose-600 text-white border-rose-500 shadow-md'
+                              : 'bg-neutral-900 hover:bg-neutral-800 text-rose-300 border-rose-500/40'
+                          }`}
+                        >
+                          {parentalControls.hiddenAdultVaultUnlocked && !parentalControls.filterAdultContent ? (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5" />
+                              <span>Hide Adult Section</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Reveal Hidden Adult Section</span>
+                            </>
+                          )}
+                        </button>
+
+                        {parentalControls.hiddenAdultVaultUnlocked &&
+                          !parentalControls.filterAdultContent &&
+                          onJumpToAdultVault && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onJumpToAdultVault();
+                                onClose();
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold border border-neutral-700 transition-colors"
+                            >
+                              Go to Vault →
+                            </button>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. Change 4-Digit Security PIN */}
+                <div className="pt-2 border-t border-neutral-800/80">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowChangePinForm(!showChangePinForm);
+                      setPinError(null);
+                    }}
+                    className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1.5"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>{showChangePinForm ? 'Cancel PIN Change' : 'Change 4-Digit Security PIN'}</span>
+                  </button>
+
+                  {showChangePinForm && (
+                    <form onSubmit={handleSaveNewPin} className="mt-3 p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] text-neutral-400 mb-1">New 4-Digit PIN</label>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={4}
+                            value={newPinValue}
+                            onChange={(e) => setNewPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            placeholder="e.g. 2580"
+                            className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono tracking-widest focus:outline-none focus:border-rose-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-neutral-400 mb-1">Confirm 4-Digit PIN</label>
+                          <input
+                            type="password"
+                            inputMode="numeric"
+                            maxLength={4}
+                            value={confirmPinValue}
+                            onChange={(e) => setConfirmPinValue(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                            placeholder="Confirm PIN"
+                            className="w-full bg-neutral-900 border border-neutral-700 rounded-lg px-3 py-1.5 text-xs text-white font-mono tracking-widest focus:outline-none focus:border-rose-500"
+                          />
+                        </div>
+                      </div>
+                      {pinError && <p className="text-xs text-rose-400">{pinError}</p>}
+                      <button
+                        type="submit"
+                        className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors"
+                      >
+                        Save New 4-Digit PIN
+                      </button>
+                    </form>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ================= SECTION 6: SINGLE DEVICE SECURITY ENFORCEMENT ================= */}
           {currentUser && (
             <div className="space-y-3 pt-4 border-t border-neutral-800">
               <div className="p-3.5 rounded-xl bg-neutral-950 border border-neutral-800 space-y-2">

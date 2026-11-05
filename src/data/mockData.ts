@@ -1771,4 +1771,196 @@ export function checkCatalogDuplicate(
   };
 }
 
+export const DEFAULT_PARENTAL_CONTROLS: import('../types').ParentalControlsConfig = {
+  enabled: true,
+  pin: '1234',
+  maxRating: 'PG-13',
+  filterAdultContent: true,
+  ageConfirmed18Plus: false,
+  hiddenAdultVaultUnlocked: false
+};
+
+// Rating hierarchy: G (1) < PG (2) < PG-13 (3) < R (4) < 18+ (5)
+export function getRatingLevel(rating: string): number {
+  const r = (rating || '').toUpperCase().trim();
+  if (r === 'G' || r === 'ALL' || r === 'TV-Y' || r === 'TV-G') return 1;
+  if (r === 'PG' || r === '10+' || r === 'TV-PG') return 2;
+  if (r === 'PG-13' || r === '13+' || r === '12+' || r === 'TV-14') return 3;
+  if (r === 'R' || r === '16+' || r === 'TV-MA') return 4;
+  if (r === '18+' || r === 'NC-17' || r === 'ADULT' || r === 'X') return 5;
+  return 3; // default PG-13
+}
+
+export function normalizeRatingBadge(rating: string): import('../types').ContentRating {
+  const level = getRatingLevel(rating);
+  if (level <= 1) return 'G';
+  if (level === 2) return 'PG';
+  if (level === 3) return 'PG-13';
+  if (level === 4) return 'R';
+  return '18+';
+}
+
+export function doesMediaExceedMaxRating(
+  itemRating: string,
+  maxRating: import('../types').ContentRating,
+  isAdultItem?: boolean
+): boolean {
+  if (isAdultItem) {
+    return getRatingLevel('18+') > getRatingLevel(maxRating);
+  }
+  return getRatingLevel(itemRating) > getRatingLevel(maxRating);
+}
+
+// Hidden Adult Movies Catalog (18+ Midnight Vault - Only visible when unlocked & Adult Filter is OFF)
+export const ADULT_MOVIES_CATALOG: MediaItem[] = [
+  {
+    id: 'adult-vault-1',
+    title: 'Velvet Shadows: Uncut Desire',
+    originalTitle: 'Velvet Shadows (Director\'s Uncensored Cut)',
+    type: 'movie',
+    language: 'english',
+    subCategory: 'movie',
+    year: 2025,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 98,
+    duration: '1h 58m',
+    genres: ['Adult 18+', 'Romance', 'Thriller'],
+    synopsis: 'An uninhibited late-night neo-noir romance set in the private penthouses of Monte Carlo, where two strangers enter a dangerous game of passion and forbidden secrets.',
+    director: 'Julian Vance',
+    cast: ['Elena Rostova', 'Marcus Sterling'],
+    bannerColor: 'from-rose-950 via-fuchsia-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-rose-900 via-fuchsia-950 to-black',
+    videoUrl: SAMPLE_VIDEOS.drama,
+    audioTracks: [
+      { id: 'av1-en', label: 'English Original (Uncut 5.1)', type: 'original', language: 'en' }
+    ]
+  },
+  {
+    id: 'adult-vault-2',
+    title: 'Minuit à Pigalle (Version Intégrale 18+)',
+    originalTitle: 'Midnight in Pigalle',
+    type: 'movie',
+    language: 'french',
+    subCategory: 'movie',
+    year: 2024,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 96,
+    duration: '2h 04m',
+    genres: ['Adult 18+', 'Drama', 'Romance'],
+    synopsis: 'Behind the velvet curtains of an exclusive Parisian cabaret, a celebrated choreographer and a mysterious patron cross every boundary in an intoxicating affair.',
+    director: 'Claire Moreau',
+    cast: ['Camille Laurent', 'Bastien Delacroix'],
+    bannerColor: 'from-purple-950 via-rose-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-purple-900 via-rose-950 to-black',
+    videoUrl: SAMPLE_VIDEOS.thriller,
+    audioTracks: [
+      { id: 'av2-fr', label: 'Français (VF Intégrale 18+)', type: 'dubbed', language: 'fr' }
+    ]
+  },
+  {
+    id: 'adult-vault-3',
+    title: 'Usiku wa Siri: Mambo ya Wakubwa (18+)',
+    originalTitle: 'Secret Nights: Uncut Edition',
+    type: 'movie',
+    language: 'swahili',
+    subCategory: 'movie',
+    djId: 'dj-ally-b',
+    djName: 'DJ Ally B',
+    year: 2025,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 99,
+    duration: '1h 52m',
+    genres: ['Adult 18+', 'Romance', 'Drama'],
+    synopsis: 'Filamu maalum ya usiku wa manane kwa watu wazima pekee (18+). Hadithi ya mapenzi motomoto, usaliti wa siri na maamuzi magumu ndani ya jumba la kifahari.',
+    translationNotes: 'Swahili 18+ Late Night Edition translated by DJ Ally B. Strictly for mature audiences.',
+    director: 'Dante Morales',
+    cast: ['Sofia Reyes', 'Rafael Cruz'],
+    bannerColor: 'from-red-950 via-amber-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-red-900 via-rose-950 to-black',
+    videoUrl: SAMPLE_VIDEOS.action,
+    audioTracks: [
+      { id: 'av3-sw', label: 'DJ Ally B Swahili 18+ Commentary', type: 'dj_overlay', language: 'sw' },
+      { id: 'av3-en', label: 'Original Uncut Audio', type: 'original', language: 'en' }
+    ]
+  },
+  {
+    id: 'adult-vault-4',
+    title: 'Ijoro ry\'Irari: Agasobanuye 18+ Uncut',
+    originalTitle: 'Temptation Island: After Hours',
+    type: 'movie',
+    language: 'kinyarwanda',
+    subCategory: 'movie',
+    djId: 'rocky-kimomo',
+    djName: 'Rocky Kimomo',
+    year: 2025,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 97,
+    duration: '2h 01m',
+    genres: ['Adult 18+', 'Romance', 'Thriller'],
+    synopsis: 'Agasobanuye k\'ijoro ry\'abakuze gusa (18+). Inkuru y\'urukundo rw\'ibanga n\'irari rikomeye ku kirwa cy\'abifite.',
+    translationNotes: 'Uncensored Agasobanuye 18+ commentary by Rocky Kimomo.',
+    director: 'Marco Bellini',
+    cast: ['Bianca Moretti', 'Luca Conti'],
+    bannerColor: 'from-fuchsia-950 via-red-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-fuchsia-900 via-red-950 to-black',
+    videoUrl: SAMPLE_VIDEOS.drama,
+    audioTracks: [
+      { id: 'av4-rw', label: 'Rocky Kimomo 18+ Agasobanuye', type: 'dj_overlay', language: 'rw' },
+      { id: 'av4-orig', label: 'Original Studio Track', type: 'original', language: 'en' }
+    ]
+  },
+  {
+    id: 'adult-vault-5',
+    title: 'Crimson Obsession: The Red Room Chronicles',
+    originalTitle: 'Red Room Chronicles (Season 1 Uncut)',
+    type: 'tv',
+    language: 'english',
+    subCategory: 'tv',
+    year: 2025,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 95,
+    duration: '6 Episodes',
+    genres: ['Adult 18+', 'Drama', 'Mystery'],
+    synopsis: 'An anthology series exploring high-society desires, private clubs, and midnight confessions across six uncut episodes.',
+    director: 'Victoria Thorne',
+    cast: ['Sienna Blake', 'Damon Cross'],
+    bannerColor: 'from-rose-950 via-neutral-900 to-black',
+    posterBg: 'bg-gradient-to-br from-rose-950 via-pink-950 to-neutral-950',
+    videoUrl: SAMPLE_VIDEOS.sciFi,
+    episodes: makeEpisodes('adult-vault-5', 'Crimson Obsession 18+', 6),
+    audioTracks: [
+      { id: 'av5-en', label: 'English 18+ Uncut Audio', type: 'original', language: 'en' }
+    ]
+  },
+  {
+    id: 'adult-vault-6',
+    title: 'Chambre 404: Confessions Nocturnes (18+)',
+    originalTitle: 'Room 404: Nocturnal Confessions',
+    type: 'movie',
+    language: 'french',
+    subCategory: 'movie',
+    year: 2024,
+    rating: '18+',
+    isAdult: true,
+    matchScore: 94,
+    duration: '1h 49m',
+    genres: ['Adult 18+', 'Romance', 'Mystery'],
+    synopsis: 'In a luxury hotel suite overlooking the French Riviera, an anonymous invitation sparks a night of passion and intrigue.',
+    director: 'Henri Chevalier',
+    cast: ['Léa Seydoux-Martin', 'Gaspard Ulliel-Vane'],
+    bannerColor: 'from-pink-950 via-purple-950 to-neutral-950',
+    posterBg: 'bg-gradient-to-br from-pink-900 via-purple-950 to-black',
+    videoUrl: SAMPLE_VIDEOS.thriller,
+    audioTracks: [
+      { id: 'av6-fr', label: 'Français (VF 18+)', type: 'dubbed', language: 'fr' }
+    ]
+  }
+];
+
+
 

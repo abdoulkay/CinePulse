@@ -5,11 +5,12 @@ import {
 } from 'lucide-react';
 import { 
   AppLanguage, AppTheme, CommunityUploadItem, ContinueWatchingItem, DJProfile, DownloadedItem, Episode, Language, MediaItem, 
-  MovieRequestItem, SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality, WatchlistItem 
+  MovieRequestItem, ParentalControlsConfig, SubCategory, SubscriptionTier, UserAccount, UserSubscription, VideoQuality, WatchlistItem 
 } from './types';
 import { 
   DJ_PROFILES, MEDIA_CATALOG, SUBSCRIPTION_PLANS, INITIAL_DOWNLOADS, INITIAL_WATCHLIST, 
-  INITIAL_CONTINUE_WATCHING, INITIAL_COMMUNITY_UPLOADS, INITIAL_MOVIE_REQUESTS 
+  INITIAL_CONTINUE_WATCHING, INITIAL_COMMUNITY_UPLOADS, INITIAL_MOVIE_REQUESTS,
+  ADULT_MOVIES_CATALOG, DEFAULT_PARENTAL_CONTROLS, doesMediaExceedMaxRating, normalizeRatingBadge
 } from './data/mockData';
 import { Navbar } from './components/Navbar';
 import { CategoryFilterBar } from './components/CategoryFilterBar';
@@ -28,6 +29,8 @@ import { SessionConflictModal } from './components/SessionConflictModal';
 import { WatchlistSection } from './components/WatchlistSection';
 import { UploadPortalModal } from './components/UploadPortalModal';
 import { MovieRequestModal } from './components/MovieRequestModal';
+import { ParentalPinModal } from './components/ParentalPinModal';
+import { HiddenAdultSection } from './components/HiddenAdultSection';
 import { TRANSLATIONS } from './utils/i18n';
 
 export default function App() {
@@ -168,6 +171,73 @@ export default function App() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('login');
   const [sessionConflictInfo, setSessionConflictInfo] = useState<{ conflictingDeviceName: string; userEmail: string } | null>(null);
+
+  // Parental Controls & Adult Content Filter State (persists in localStorage)
+  const [parentalControls, setParentalControls] = useState<ParentalControlsConfig>(() => {
+    try {
+      const saved = localStorage.getItem('cinepulse_parental_controls');
+      if (saved) {
+        return { ...DEFAULT_PARENTAL_CONTROLS, ...JSON.parse(saved) };
+      }
+    } catch {}
+    return DEFAULT_PARENTAL_CONTROLS;
+  });
+
+  // Sync parentalControls to localStorage
+  useEffect(() => {
+    localStorage.setItem('cinepulse_parental_controls', JSON.stringify(parentalControls));
+  }, [parentalControls]);
+
+  const handleUpdateParentalControls = (updated: Partial<ParentalControlsConfig>) => {
+    setParentalControls((prev) => ({ ...prev, ...updated }));
+  };
+
+  // PIN Challenge Modal State (for playback rating lock or unlocking the Hidden Adult Movies Vault)
+  const [pinModalState, setPinModalState] = useState<{
+    isOpen: boolean;
+    mode: 'playback' | 'unlock_adult_vault';
+    item?: MediaItem;
+    episode?: Episode;
+    initialTime?: number;
+  }>({
+    isOpen: false,
+    mode: 'playback'
+  });
+
+  // Centralized Playback Gate: Enforces Parental Controls Maximum Rating & 4-Digit PIN
+  const handleRequestPlayMedia = (item: MediaItem, episode?: Episode, initialTime?: number) => {
+    const isAdultItem = Boolean(item.isAdult || normalizeRatingBadge(item.rating) === '18+');
+    const exceedsMaxRating =
+      parentalControls.enabled &&
+      doesMediaExceedMaxRating(item.rating, parentalControls.maxRating, item.isAdult);
+
+    if (exceedsMaxRating || (isAdultItem && !parentalControls.ageConfirmed18Plus)) {
+      setPinModalState({
+        isOpen: true,
+        mode: 'playback',
+        item,
+        episode,
+        initialTime
+      });
+      return;
+    }
+
+    setActivePlayerItem({ item, episode, initialTime });
+  };
+
+  // Handler for toggling or unlocking the Hidden Adult Movies Section
+  const handleTriggerAdultVault = () => {
+    if (parentalControls.hiddenAdultVaultUnlocked && !parentalControls.filterAdultContent) {
+      // Already unlocked: scroll to the Hidden Adult Movies Section
+      document.getElementById('hidden-adult-movies-section')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      // Prompt for 18+ Age Confirmation & 4-Digit Parental PIN
+      setPinModalState({
+        isOpen: true,
+        mode: 'unlock_adult_vault'
+      });
+    }
+  };
 
   // Sync theme with HTML document class
   useEffect(() => {
@@ -625,7 +695,8 @@ export default function App() {
       return;
     }
 
-    const originalMedia = MEDIA_CATALOG.find((m) => m.id === downloaded.mediaId) || {
+    const allAvailableMedia = [...catalog, ...ADULT_MOVIES_CATALOG];
+    const originalMedia = allAvailableMedia.find((m) => m.id === downloaded.mediaId) || {
       id: downloaded.mediaId,
       title: downloaded.title,
       type: downloaded.itemType === 'episode' ? 'tv' : 'movie',
@@ -660,7 +731,7 @@ export default function App() {
       };
     }
 
-    setActivePlayerItem({ item: originalMedia, episode: episodeObj });
+    handleRequestPlayMedia(originalMedia, episodeObj);
   };
 
   // Check if item or specific episode is in watchlist
@@ -753,7 +824,8 @@ export default function App() {
 
   // Play item from watchlist directly
   const handlePlayWatchlistItem = (watchlistItem: WatchlistItem) => {
-    const foundMedia = MEDIA_CATALOG.find((m) => m.id === watchlistItem.mediaId);
+    const allAvailableMedia = [...catalog, ...ADULT_MOVIES_CATALOG];
+    const foundMedia = allAvailableMedia.find((m) => m.id === watchlistItem.mediaId);
     const originalMedia: MediaItem = foundMedia || {
       id: watchlistItem.mediaId,
       title: watchlistItem.title,
@@ -792,7 +864,7 @@ export default function App() {
       };
     }
 
-    setActivePlayerItem({ item: originalMedia, episode: episodeObj });
+    handleRequestPlayMedia(originalMedia, episodeObj);
   };
 
   // Scroll to Watchlist helper
@@ -863,7 +935,8 @@ export default function App() {
 
   // CONTINUE WATCHING: Resume playback at exact recorded second
   const handleResumePlayback = (cwItem: ContinueWatchingItem) => {
-    const media = MEDIA_CATALOG.find((m) => m.id === cwItem.mediaId) || {
+    const allAvailableMedia = [...catalog, ...ADULT_MOVIES_CATALOG];
+    const media = allAvailableMedia.find((m) => m.id === cwItem.mediaId) || {
       id: cwItem.mediaId,
       title: cwItem.mediaTitle || cwItem.title,
       type: cwItem.itemType === 'episode' ? 'tv' : 'movie',
@@ -901,12 +974,7 @@ export default function App() {
       }
     }
 
-    setActivePlayerItem({
-      item: media,
-      episode: ep,
-      initialTime: cwItem.currentTimeSeconds
-    });
-    showToast(`Resumed "${cwItem.title}" at ${Math.floor(cwItem.currentTimeSeconds / 60)}m!`, 'info');
+    handleRequestPlayMedia(media, ep, cwItem.currentTimeSeconds);
   };
 
   // CONTINUE WATCHING: Remove item from list
@@ -915,18 +983,34 @@ export default function App() {
     showToast('Removed from Continue Watching.', 'info');
   };
 
-  // Extract unique genres across catalog
+  // Catalog filtered by Adult Content Filter setting
+  const visibleCatalog = useMemo(() => {
+    const baseList =
+      !parentalControls.filterAdultContent && parentalControls.hiddenAdultVaultUnlocked
+        ? [...catalog, ...ADULT_MOVIES_CATALOG]
+        : catalog;
+
+    if (!parentalControls.filterAdultContent) {
+      return baseList;
+    }
+
+    return baseList.filter(
+      (item) => !item.isAdult && normalizeRatingBadge(item.rating) !== '18+'
+    );
+  }, [catalog, parentalControls.filterAdultContent, parentalControls.hiddenAdultVaultUnlocked]);
+
+  // Extract unique genres across visible catalog
   const allGenres = useMemo(() => {
     const set = new Set<string>();
-    catalog.forEach((item) => {
+    visibleCatalog.forEach((item) => {
       item.genres.forEach((g) => set.add(g));
     });
     return Array.from(set).sort();
-  }, [catalog]);
+  }, [visibleCatalog]);
 
   // Filtered Media items
   const filteredMedia = useMemo(() => {
-    return catalog.filter((item) => {
+    return visibleCatalog.filter((item) => {
       // Language filter
       if (currentLanguage !== 'all' && item.language !== currentLanguage) {
         return false;
@@ -964,42 +1048,48 @@ export default function App() {
 
       return true;
     });
-  }, [catalog, currentLanguage, currentSubCategory, selectedDjId, selectedGenre, searchQuery]);
+  }, [visibleCatalog, currentLanguage, currentSubCategory, selectedDjId, selectedGenre, searchQuery]);
+
+  // Standard catalog filtered by adult content setting for main rows
+  const mainRailsCatalog = useMemo(() => {
+    if (!parentalControls.filterAdultContent) return catalog;
+    return catalog.filter((item) => !item.isAdult && normalizeRatingBadge(item.rating) !== '18+');
+  }, [catalog, parentalControls.filterAdultContent]);
 
   // Curated category rows for the Netflix-style landing view
   const actionItems = useMemo(
-    () => catalog.filter((m) => m.genres.some((g) => ['Action', 'Martial Arts', 'Adventure'].includes(g))),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.genres.some((g) => ['Action', 'Martial Arts', 'Adventure'].includes(g))),
+    [mainRailsCatalog]
   );
   const comedyItems = useMemo(
-    () => catalog.filter((m) => m.genres.includes('Comedy') || m.djName?.includes('Murphy') || m.title.includes('Shaolin') || m.title.includes('Vituko')),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.genres.includes('Comedy') || m.djName?.includes('Murphy') || m.title.includes('Shaolin') || m.title.includes('Vituko')),
+    [mainRailsCatalog]
   );
   const thrillerItems = useMemo(
-    () => catalog.filter((m) => m.genres.some((g) => ['Thriller', 'Crime', 'Mystery', 'Suspense'].includes(g))),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.genres.some((g) => ['Thriller', 'Crime', 'Mystery', 'Suspense'].includes(g))),
+    [mainRailsCatalog]
   );
   const becauseYouWatchedItems = useMemo(
-    () => catalog.filter((m) => ['swa-afro-1', 'kin-giti-1', 'swa-murphy-1', 'kin-rocky-2', 'swa-afro-2'].includes(m.id)),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => ['swa-afro-1', 'kin-giti-1', 'swa-murphy-1', 'kin-rocky-2', 'swa-afro-2'].includes(m.id)),
+    [mainRailsCatalog]
   );
 
   // Grouped items by language for the catalog
   const kinyarwandaItems = useMemo(
-    () => catalog.filter((m) => m.language === 'kinyarwanda'),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.language === 'kinyarwanda'),
+    [mainRailsCatalog]
   );
   const swahiliItems = useMemo(
-    () => catalog.filter((m) => m.language === 'swahili'),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.language === 'swahili'),
+    [mainRailsCatalog]
   );
   const englishItems = useMemo(
-    () => catalog.filter((m) => m.language === 'english'),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.language === 'english'),
+    [mainRailsCatalog]
   );
   const frenchItems = useMemo(
-    () => catalog.filter((m) => m.language === 'french'),
-    [catalog]
+    () => mainRailsCatalog.filter((m) => m.language === 'french'),
+    [mainRailsCatalog]
   );
 
   // Main UI Content to be rendered in standard layout or mobile phone simulator
@@ -1030,7 +1120,7 @@ export default function App() {
       {/* Main Container - Mobile-friendly & compact */}
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-2 sm:pt-4 space-y-6 sm:space-y-8">
         
-        {/* Categories, Subcategories & DJ Filters (Top & accessible) */}
+        {/* Categories, Subcategories, DJ Filters & Parental / Adult Vault Controls */}
         <CategoryFilterBar
           currentLanguage={currentLanguage}
           onSelectLanguage={(lang) => {
@@ -1045,6 +1135,9 @@ export default function App() {
           selectedGenre={selectedGenre}
           onSelectGenre={setSelectedGenre}
           allGenres={allGenres}
+          parentalControls={parentalControls}
+          onOpenParentalSettings={() => setIsSettingsModalOpen(true)}
+          onToggleAdultVault={handleTriggerAdultVault}
         />
 
         {/* Search status if active */}
@@ -1114,7 +1207,7 @@ export default function App() {
                     item={item}
                     subscription={subscription}
                     onSelect={(item) => setSelectedDetailItem(item)}
-                    onPlay={(item) => setActivePlayerItem({ item })}
+                    onPlay={(item) => handleRequestPlayMedia(item)}
                     onQuickDownload={(item) => {
                       if (item.type === 'movie') {
                         handleDownloadMovie(item);
@@ -1154,7 +1247,7 @@ export default function App() {
               items={becauseYouWatchedItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1174,7 +1267,7 @@ export default function App() {
               items={actionItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1194,7 +1287,7 @@ export default function App() {
               items={comedyItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1214,7 +1307,7 @@ export default function App() {
               items={thrillerItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1235,7 +1328,7 @@ export default function App() {
               items={kinyarwandaItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1256,7 +1349,7 @@ export default function App() {
               items={swahiliItems}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1273,7 +1366,8 @@ export default function App() {
               watchlist={watchlist}
               onPlayItem={handlePlayWatchlistItem}
               onSelectItem={(mediaId) => {
-                const item = MEDIA_CATALOG.find((m) => m.id === mediaId);
+                const allAvailableMedia = [...catalog, ...ADULT_MOVIES_CATALOG];
+                const item = allAvailableMedia.find((m) => m.id === mediaId);
                 if (item) setSelectedDetailItem(item);
               }}
               onRemoveItem={handleRemoveFromWatchlist}
@@ -1294,7 +1388,7 @@ export default function App() {
               items={[...englishItems, ...frenchItems]}
               subscription={subscription}
               onSelect={(item) => setSelectedDetailItem(item)}
-              onPlay={(item) => setActivePlayerItem({ item })}
+              onPlay={(item) => handleRequestPlayMedia(item)}
               onQuickDownload={(item) => {
                 if (item.type === 'movie') handleDownloadMovie(item);
                 else setSelectedDetailItem(item);
@@ -1306,6 +1400,30 @@ export default function App() {
             />
 
           </div>
+        )}
+
+        {/* ================= HIDDEN ADULT MOVIES SECTION (18+ UNCUT VAULT) ================= */}
+        {parentalControls.hiddenAdultVaultUnlocked && !parentalControls.filterAdultContent && (
+          <HiddenAdultSection
+            items={ADULT_MOVIES_CATALOG}
+            subscription={subscription}
+            onSelect={(item) => setSelectedDetailItem(item)}
+            onPlay={(item) => handleRequestPlayMedia(item)}
+            onQuickDownload={(item) => {
+              if (item.type === 'movie') handleDownloadMovie(item);
+              else setSelectedDetailItem(item);
+            }}
+            downloadedIds={downloadedIds}
+            isWatchlisted={(id) => isWatchlisted(id)}
+            onToggleWatchlist={handleToggleWatchlist}
+            onLockAndHideVault={() => {
+              handleUpdateParentalControls({
+                hiddenAdultVaultUnlocked: false,
+                filterAdultContent: true
+              });
+              showToast('Hidden Adult Movies Vault locked and concealed.', 'info');
+            }}
+          />
         )}
 
         {/* Feature Comparison Box: Free Tier vs Subscription */}
@@ -1392,6 +1510,10 @@ export default function App() {
               <button onClick={() => setCurrentLanguage('english')} className="hover:text-neutral-200 transition-colors">English Dubs</button>
               <button onClick={() => setCurrentLanguage('french')} className="hover:text-neutral-200 transition-colors">Français (VF)</button>
               <button onClick={() => setIsSubscriptionModalOpen(true)} className="text-rose-400 hover:text-rose-300 font-semibold">Subscription Plans</button>
+              <button onClick={handleTriggerAdultVault} className="hover:text-rose-400 transition-colors flex items-center gap-1">
+                <Lock className="w-3 h-3" />
+                <span>18+ Vault (PIN)</span>
+              </button>
             </div>
           </div>
 
@@ -1510,7 +1632,7 @@ export default function App() {
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onSelectMedia={(item) => setSelectedDetailItem(item)}
-        onPlayMedia={(item) => setActivePlayerItem({ item })}
+        onPlayMedia={(item) => handleRequestPlayMedia(item)}
         subscription={subscription}
         onOpenMovieRequestModal={(query) => {
           setMovieRequestSearchPrefill(query || '');
@@ -1527,7 +1649,7 @@ export default function App() {
           onClose={() => setSelectedDetailItem(null)}
           subscription={subscription}
           onPlay={(item, episode) => {
-            setActivePlayerItem({ item, episode });
+            handleRequestPlayMedia(item, episode);
           }}
           onDownloadEpisode={handleDownloadEpisode}
           onDownloadMovie={handleDownloadMovie}
@@ -1605,7 +1727,7 @@ export default function App() {
         onSelectTier={handleSelectTier}
       />
 
-      {/* Settings Modal (Theme, 3 Languages, Account, Single Device, Profile & Subscription) */}
+      {/* Settings Modal (Theme, 3 Languages, Account, Single Device, Profile, Subscription & Parental Controls) */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -1626,6 +1748,58 @@ export default function App() {
         onLogout={handleLogout}
         onSimulateSecondDeviceLogin={handleSimulateSecondDeviceLogin}
         onUpdateProfile={handleUpdateProfile}
+        parentalControls={parentalControls}
+        onUpdateParentalControls={handleUpdateParentalControls}
+        onJumpToAdultVault={() => {
+          if (currentLanguage !== 'all' || selectedDjId || searchQuery.trim() || selectedGenre !== 'all') {
+            setCurrentLanguage('all');
+            setCurrentSubCategory('all');
+            setSelectedDjId('');
+            setSelectedGenre('all');
+            setSearchQuery('');
+          }
+          setTimeout(() => {
+            document.getElementById('hidden-adult-movies-section')?.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }}
+      />
+
+      {/* 4-Digit Parental Controls PIN Verification Modal */}
+      <ParentalPinModal
+        isOpen={pinModalState.isOpen}
+        onClose={() => setPinModalState((prev) => ({ ...prev, isOpen: false }))}
+        mode={pinModalState.mode}
+        mediaItem={pinModalState.item}
+        episode={pinModalState.episode}
+        parentalControls={parentalControls}
+        onUpdateParentalControls={handleUpdateParentalControls}
+        onSuccessPlayback={(verifiedItem, verifiedEpisode) => {
+          const targetTime = pinModalState.initialTime;
+          setPinModalState((prev) => ({ ...prev, isOpen: false }));
+          setActivePlayerItem({
+            item: verifiedItem,
+            episode: verifiedEpisode,
+            initialTime: targetTime
+          });
+          showToast(
+            `PIN verified. Playing "${verifiedEpisode ? verifiedEpisode.title : verifiedItem.title}".`,
+            'success'
+          );
+        }}
+        onSuccessUnlockVault={() => {
+          setPinModalState((prev) => ({ ...prev, isOpen: false }));
+          showToast('18+ Adult Movies Vault unlocked!', 'success');
+          if (currentLanguage !== 'all' || selectedDjId || searchQuery.trim() || selectedGenre !== 'all') {
+            setCurrentLanguage('all');
+            setCurrentSubCategory('all');
+            setSelectedDjId('');
+            setSelectedGenre('all');
+            setSearchQuery('');
+          }
+          setTimeout(() => {
+            document.getElementById('hidden-adult-movies-section')?.scrollIntoView({ behavior: 'smooth' });
+          }, 120);
+        }}
       />
 
       {/* Email-Only Authentication Modal */}
@@ -1669,7 +1843,7 @@ export default function App() {
         onUploadSubmit={handleUploadSubmit}
         onApproveUpload={handleApproveUpload}
         onRejectUpload={handleRejectUpload}
-        onPlayMediaItem={(media) => setActivePlayerItem({ item: media })}
+        onPlayMediaItem={(media) => handleRequestPlayMedia(media)}
         appLanguage={appLanguage}
       />
 
@@ -1685,7 +1859,7 @@ export default function App() {
         requests={movieRequests}
         onRequestSubmit={handleMovieRequestSubmit}
         onToggleUpvote={handleToggleUpvoteRequest}
-        onPlayMedia={(media) => setActivePlayerItem({ item: media })}
+        onPlayMedia={(media) => handleRequestPlayMedia(media)}
         catalog={catalog}
         initialSearchQuery={movieRequestSearchPrefill}
         appLanguage={appLanguage}
@@ -1694,3 +1868,4 @@ export default function App() {
     </div>
   );
 }
+
