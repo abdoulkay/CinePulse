@@ -36,14 +36,14 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
   return (
     <div className="space-y-4">
       {/* Primary Language Bar (Tabs) */}
-      <div className="flex items-center justify-between border-b border-neutral-800 pb-3 gap-2 overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5 p-1 bg-neutral-900 rounded-xl border border-neutral-800 shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-neutral-800 pb-2.5 gap-2.5">
+        <div className="flex items-center gap-1.5 p-1 bg-neutral-900 rounded-xl border border-neutral-800 overflow-x-auto scrollbar-none touch-pan-x -mx-1 px-1 sm:mx-0">
           <button
             onClick={() => {
               onSelectLanguage('all');
               onSelectDj('');
             }}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
+            className={`px-3 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all touch-manipulation min-h-[38px] ${
               currentLanguage === 'all'
                 ? 'bg-rose-600 text-white shadow'
                 : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
@@ -57,7 +57,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               onSelectLanguage('english');
               onSelectDj('');
             }}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
+            className={`px-3 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all touch-manipulation min-h-[38px] ${
               currentLanguage === 'english'
                 ? 'bg-rose-600 text-white shadow'
                 : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
@@ -71,7 +71,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
               onSelectLanguage('french');
               onSelectDj('');
             }}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all ${
+            className={`px-3 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all touch-manipulation min-h-[38px] ${
               currentLanguage === 'french'
                 ? 'bg-rose-600 text-white shadow'
                 : 'text-neutral-400 hover:text-white hover:bg-neutral-800'
@@ -82,7 +82,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
 
           <button
             onClick={() => onSelectLanguage('swahili')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 touch-manipulation min-h-[38px] ${
               currentLanguage === 'swahili'
                 ? 'bg-amber-600 text-white shadow'
                 : 'text-neutral-400 hover:text-amber-400 hover:bg-neutral-800'
@@ -94,7 +94,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
 
           <button
             onClick={() => onSelectLanguage('kinyarwanda')}
-            className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3 py-2 sm:px-3.5 sm:py-1.5 text-xs font-semibold rounded-lg whitespace-nowrap transition-all flex items-center gap-1.5 touch-manipulation min-h-[38px] ${
               currentLanguage === 'kinyarwanda'
                 ? 'bg-rose-600 text-white shadow'
                 : 'text-neutral-400 hover:text-rose-400 hover:bg-neutral-800'
@@ -106,13 +106,13 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
         </div>
 
         {/* Quick Genre Dropdown / Filter Indicator */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center justify-end gap-2 shrink-0 self-end sm:self-auto">
           <div className="flex items-center gap-1.5 text-xs text-neutral-400">
             <SlidersHorizontal className="w-3.5 h-3.5 text-neutral-500" />
             <select
               value={selectedGenre}
               onChange={(e) => onSelectGenre(e.target.value)}
-              className="bg-neutral-900 border border-neutral-800 text-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-rose-500"
+              className="bg-neutral-900 border border-neutral-800 text-neutral-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-rose-500 min-h-[36px]"
             >
               <option value="all">All Genres</option>
               {allGenres.map((g) => (
@@ -193,10 +193,10 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
           </div>
 
           {/* DJs Selector Pill Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none touch-pan-x -mx-1 px-1 sm:mx-0">
             <button
               onClick={() => onSelectDj('')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap border transition-all ${
+              className={`px-3 py-2 sm:py-1.5 rounded-xl text-xs font-medium whitespace-nowrap border transition-all touch-manipulation min-h-[38px] ${
                 !selectedDjId
                   ? 'bg-neutral-800 border-neutral-600 text-white font-semibold'
                   : 'bg-neutral-900 border-neutral-800 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700'
@@ -211,7 +211,7 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                 <button
                   key={dj.id}
                   onClick={() => onSelectDj(dj.id)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap border transition-all ${
+                  className={`flex items-center gap-2 px-3 py-2 sm:py-1.5 rounded-xl text-xs font-medium whitespace-nowrap border transition-all touch-manipulation min-h-[38px] ${
                     isSelected
                       ? dj.language === 'swahili'
                         ? 'bg-amber-600 border-amber-500 text-white shadow-md'
@@ -219,12 +219,12 @@ export const CategoryFilterBar: React.FC<CategoryFilterBarProps> = ({
                       : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:text-white hover:border-neutral-700'
                   }`}
                 >
-                  <span className={`w-5 h-5 rounded-full bg-gradient-to-tr ${dj.accentColor} text-[10px] font-bold text-white flex items-center justify-center`}>
+                  <span className={`w-5 h-5 rounded-full bg-gradient-to-tr ${dj.accentColor} text-[10px] font-bold text-white flex items-center justify-center shrink-0`}>
                     {dj.avatarInitials}
                   </span>
                   <span>{dj.name}</span>
                   <span className="text-[10px] opacity-75 tabular-nums">({dj.totalTitles})</span>
-                  {isSelected && <Check className="w-3 h-3 text-white ml-0.5" />}
+                  {isSelected && <Check className="w-3 h-3 text-white ml-0.5 shrink-0" />}
                 </button>
               );
             })}

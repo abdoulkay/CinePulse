@@ -83,10 +83,10 @@ export const MediaRow: React.FC<MediaRowProps> = ({
 
         {/* Right Controls: See More Button & Rail Chevrons */}
         <div className="flex items-center gap-2">
-          {/* Always Visible "See More" Button */}
+          {/* Always Visible "See More" Button with touch-target ergonomics */}
           <button
             onClick={handleSeeMoreClick}
-            className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-neutral-800/60 transition-colors"
+            className="text-xs font-semibold text-rose-400 hover:text-rose-300 flex items-center gap-1 py-1.5 px-2.5 sm:py-1 sm:px-2 rounded-lg hover:bg-neutral-800/60 transition-colors touch-manipulation min-h-[36px]"
           >
             <span>{isExpanded ? 'Show Less' : 'See More'}</span>
             {isExpanded ? (
@@ -120,7 +120,7 @@ export const MediaRow: React.FC<MediaRowProps> = ({
 
       {/* Row Body: Horizontal Rail OR Expanded Grid */}
       {isExpanded ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 pt-1 animate-fadeIn">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2.5 sm:gap-4 pt-1 animate-fadeIn">
           {items.map((item) => (
             <div key={item.id} className="w-full">
               <MediaCard
@@ -139,10 +139,10 @@ export const MediaRow: React.FC<MediaRowProps> = ({
       ) : (
         <div 
           ref={scrollContainerRef}
-          className="flex gap-3 overflow-x-auto scrollbar-none pb-2 pt-1 px-1 snap-x scroll-smooth"
+          className="flex gap-2.5 sm:gap-3 overflow-x-auto scrollbar-none pb-2 pt-1 px-1 snap-x snap-mandatory scroll-smooth touch-pan-x"
         >
           {items.slice(0, initialCardLimit).map((item) => (
-            <div key={item.id} className="snap-start">
+            <div key={item.id} className="snap-start shrink-0">
               <MediaCard
                 item={item}
                 subscription={subscription}

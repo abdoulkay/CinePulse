@@ -78,11 +78,18 @@ export const SearchTop10Modal: React.FC<SearchTop10ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-2 sm:p-4 md:p-6 bg-black/90 backdrop-blur-md overflow-y-auto animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/90 backdrop-blur-md overflow-y-auto animate-fadeIn">
       <div 
-        className="relative w-full max-w-3xl bg-neutral-900 border border-neutral-800 rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden my-4 sm:my-8"
+        className="relative w-full max-w-3xl bg-neutral-900 border border-neutral-800 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden my-0 sm:my-8 max-h-[92vh] sm:max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Drag Indicator */}
+        <div 
+          onClick={onClose}
+          className="sm:hidden w-12 h-1.5 bg-neutral-600 rounded-full mx-auto my-2.5 shrink-0 cursor-pointer" 
+          title="Tap to close"
+        />
+
         {/* Top Search Input Bar */}
         <div className="p-4 sm:p-5 border-b border-neutral-800 bg-neutral-950/80 flex items-center gap-3">
           <Search className="w-5 h-5 text-rose-500 shrink-0" />

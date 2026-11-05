@@ -1377,7 +1377,7 @@ export default function App() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-16 border-t border-neutral-800 bg-neutral-950 pt-10 pb-12">
+      <footer className="mt-16 border-t border-neutral-800 bg-neutral-950 pt-10 pb-24 md:pb-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
             <div className="flex items-center gap-2">
@@ -1494,8 +1494,8 @@ export default function App() {
             appLanguage={appLanguage}
           />
 
-          {/* Main Desktop Layout */}
-          <main className="flex-1">
+          {/* Main Layout - Optimized for phone and tablet */}
+          <main className="flex-1 pb-20 md:pb-0">
             {mainContent}
           </main>
         </>

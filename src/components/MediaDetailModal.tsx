@@ -38,110 +38,119 @@ export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
   const isMovieDownloaded = downloadedIds.has(item.id);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
       <div 
-        className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl overflow-hidden my-8"
+        className="relative w-full max-w-4xl bg-neutral-900 border border-neutral-800 rounded-t-3xl sm:rounded-2xl shadow-2xl overflow-hidden max-h-[92vh] sm:max-h-[90vh] flex flex-col my-0 sm:my-8"
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Mobile Drag Indicator Handle */}
+        <div 
+          onClick={onClose}
+          className="sm:hidden w-12 h-1.5 bg-neutral-600 hover:bg-neutral-500 rounded-full mx-auto my-2 shrink-0 cursor-pointer transition-colors" 
+          title="Swipe down or tap to close"
+        />
+
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-neutral-950/80 hover:bg-neutral-800 text-neutral-300 hover:text-white flex items-center justify-center border border-neutral-700/60 transition-colors"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-neutral-950/80 hover:bg-neutral-800 text-neutral-300 hover:text-white flex items-center justify-center border border-neutral-700/60 transition-colors touch-manipulation"
           aria-label="Close details"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
 
-        {/* Modal Hero Header */}
-        <div className={`relative h-64 sm:h-72 w-full bg-gradient-to-r ${item.bannerColor} p-6 sm:p-8 flex items-end overflow-hidden`}>
-          <div className="absolute inset-0 bg-radial-gradient opacity-30 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-transparent pointer-events-none" />
+        {/* Modal Scrollable Container */}
+        <div className="overflow-y-auto flex-1">
+          {/* Modal Hero Header */}
+          <div className={`relative min-h-[220px] xs:h-64 sm:h-72 w-full bg-gradient-to-r ${item.bannerColor} p-4 sm:p-6 md:p-8 flex items-end overflow-hidden`}>
+            <div className="absolute inset-0 bg-radial-gradient opacity-30 pointer-events-none" />
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900 via-neutral-900/60 to-transparent pointer-events-none" />
 
-          <div className="relative z-10 space-y-2 max-w-2xl">
-            <div className="flex flex-wrap items-center gap-2">
-              {isDjTranslated && item.djName ? (
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-600/30 border border-rose-500/50 text-xs font-semibold text-rose-300">
-                  <Mic className="w-3.5 h-3.5 text-rose-400" />
-                  <span>{item.language === 'swahili' ? 'DJ Voiceover' : 'Agasobanuye'}: {item.djName}</span>
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-neutral-800/80 border border-neutral-700 text-xs font-medium text-neutral-300">
-                  {item.type === 'tv' ? <Tv className="w-3.5 h-3.5 text-cyan-400" /> : <Film className="w-3.5 h-3.5 text-amber-400" />}
-                  <span className="capitalize">{item.subCategory === 'tv' ? 'TV Series' : 'Movie'} · {item.language.toUpperCase()} DUB</span>
-                </span>
+            <div className="relative z-10 space-y-2 max-w-2xl w-full">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                {isDjTranslated && item.djName ? (
+                  <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-rose-600/30 border border-rose-500/50 text-[11px] sm:text-xs font-semibold text-rose-300">
+                    <Mic className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-rose-400" />
+                    <span>{item.language === 'swahili' ? 'DJ Voiceover' : 'Agasobanuye'}: {item.djName}</span>
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-neutral-800/80 border border-neutral-700 text-[11px] sm:text-xs font-medium text-neutral-300">
+                    {item.type === 'tv' ? <Tv className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-cyan-400" /> : <Film className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400" />}
+                    <span className="capitalize">{item.subCategory === 'tv' ? 'TV Series' : 'Movie'} · {item.language.toUpperCase()} DUB</span>
+                  </span>
+                )}
+
+                <span className="text-[11px] sm:text-xs font-bold text-emerald-400 tabular-nums">{item.matchScore}% Match</span>
+                <span className="text-neutral-500">·</span>
+                <span className="text-[11px] sm:text-xs text-neutral-300 font-medium">{item.year}</span>
+                <span className="text-neutral-500">·</span>
+                <span className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-300 font-mono">{item.rating}</span>
+              </div>
+
+              <h2 className="font-display font-extrabold text-xl sm:text-3xl md:text-4xl text-white tracking-tight">
+                {item.title}
+              </h2>
+
+              {item.originalTitle && (
+                <p className="text-[11px] sm:text-xs text-neutral-400 italic">
+                  Original Title: {item.originalTitle}
+                </p>
               )}
 
-              <span className="text-xs font-bold text-emerald-400 tabular-nums">{item.matchScore}% Match</span>
-              <span className="text-neutral-500">·</span>
-              <span className="text-xs text-neutral-300 font-medium">{item.year}</span>
-              <span className="text-neutral-500">·</span>
-              <span className="text-xs px-1.5 py-0.5 bg-neutral-800 rounded text-neutral-300 font-mono">{item.rating}</span>
-            </div>
-
-            <h2 className="font-display font-extrabold text-2xl sm:text-3xl md:text-4xl text-white tracking-tight">
-              {item.title}
-            </h2>
-
-            {item.originalTitle && (
-              <p className="text-xs text-neutral-400 italic">
-                Original Title: {item.originalTitle}
-              </p>
-            )}
-
-            {/* Quick Actions */}
-            <div className="pt-2 flex items-center gap-3">
-              <button
-                onClick={() => {
-                  onPlay(item, item.episodes?.[0]);
-                  onClose();
-                }}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-sm flex items-center gap-2 shadow-lg hover:scale-105 transition-all"
-              >
-                <Play className="w-4 h-4 fill-current" />
-                <span>{item.type === 'tv' ? 'Play Episode 1' : 'Play Movie'}</span>
-              </button>
-
-              {/* Watchlist Toggle for the Movie/Series */}
-              {onToggleWatchlist && (
+              {/* Quick Actions */}
+              <div className="pt-2 flex flex-wrap items-center gap-2 sm:gap-3">
                 <button
-                  onClick={() => onToggleWatchlist(item)}
-                  className={`px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 border transition-all ${
-                    isItemWatchlisted?.(item.id)
-                      ? 'bg-rose-600/25 border-rose-500 text-rose-300'
-                      : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
-                  }`}
-                  title={isItemWatchlisted?.(item.id) ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  onClick={() => {
+                    onPlay(item, item.episodes?.[0]);
+                    onClose();
+                  }}
+                  className="px-4 sm:px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all touch-manipulation min-h-[42px]"
                 >
-                  <Heart className={`w-4 h-4 ${isItemWatchlisted?.(item.id) ? 'fill-current text-rose-500' : ''}`} />
-                  <span>{isItemWatchlisted?.(item.id) ? 'Watchlisted' : 'Add to Watchlist'}</span>
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>{item.type === 'tv' ? 'Play Episode 1' : 'Play Movie'}</span>
                 </button>
-              )}
 
-              {item.type === 'movie' && (
-                <button
-                  onClick={() => onDownloadMovie(item)}
-                  className={`px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-2 border transition-all ${
-                    isMovieDownloaded
-                      ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
-                      : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
-                  }`}
-                >
-                  {isMovieDownloaded ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-400" />
-                      <span>Downloaded</span>
-                    </>
-                  ) : (
-                    <>
-                      <Download className="w-4 h-4" />
-                      <span>Download Movie</span>
-                    </>
-                  )}
-                </button>
-              )}
+                {/* Watchlist Toggle for the Movie/Series */}
+                {onToggleWatchlist && (
+                  <button
+                    onClick={() => onToggleWatchlist(item)}
+                    className={`px-3.5 sm:px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all touch-manipulation min-h-[42px] ${
+                      isItemWatchlisted?.(item.id)
+                        ? 'bg-rose-600/25 border-rose-500 text-rose-300'
+                        : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
+                    }`}
+                    title={isItemWatchlisted?.(item.id) ? 'Remove from Watchlist' : 'Add to Watchlist'}
+                  >
+                    <Heart className={`w-4 h-4 ${isItemWatchlisted?.(item.id) ? 'fill-current text-rose-500' : ''}`} />
+                    <span>{isItemWatchlisted?.(item.id) ? 'Watchlisted' : 'Add to Watchlist'}</span>
+                  </button>
+                )}
+
+                {item.type === 'movie' && (
+                  <button
+                    onClick={() => onDownloadMovie(item)}
+                    className={`px-3.5 sm:px-4 py-2.5 rounded-xl font-medium text-xs sm:text-sm flex items-center justify-center gap-2 border transition-all touch-manipulation min-h-[42px] ${
+                      isMovieDownloaded
+                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300'
+                        : 'bg-neutral-800 hover:bg-neutral-700 text-white border-neutral-700'
+                    }`}
+                  >
+                    {isMovieDownloaded ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>Downloaded</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4" />
+                        <span>Download Movie</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
         {/* Modal Body */}
         <div className="p-6 sm:p-8 space-y-6">
@@ -397,6 +406,8 @@ export const MediaDetailModal: React.FC<MediaDetailModalProps> = ({
 
             </div>
           )}
+
+        </div>
 
         </div>
 

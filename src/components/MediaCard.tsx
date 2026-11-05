@@ -38,11 +38,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
   const hasProgress = progressPercent !== undefined && progressPercent > 0;
 
   return (
-    <div className="group relative w-[160px] sm:w-[190px] md:w-[215px] shrink-0 bg-neutral-900 rounded-lg sm:rounded-xl overflow-hidden border border-neutral-800/80 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-black/70 select-none">
+    <div className="group relative w-[136px] xs:w-[150px] sm:w-[175px] md:w-[200px] lg:w-[220px] shrink-0 bg-neutral-900 rounded-lg sm:rounded-xl overflow-hidden border border-neutral-800/80 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-black/70 select-none">
       {/* Poster / Artwork Header (Sleek Netflix 16:9 ratio) */}
       <div 
         onClick={() => onSelect(item)}
-        className={`relative aspect-[16/9] w-full ${item.posterBg || 'bg-gradient-to-br from-neutral-800 to-neutral-950'} p-2.5 sm:p-3 flex flex-col justify-between cursor-pointer overflow-hidden`}
+        className={`relative aspect-[16/9] w-full ${item.posterBg || 'bg-gradient-to-br from-neutral-800 to-neutral-950'} p-2 sm:p-2.5 md:p-3 flex flex-col justify-between cursor-pointer overflow-hidden`}
       >
         {/* Subtle patterned overlay */}
         <div className="absolute inset-0 bg-radial-gradient opacity-30 pointer-events-none" />
@@ -52,16 +52,16 @@ export const MediaCard: React.FC<MediaCardProps> = ({
         <div className="relative z-10 flex items-center justify-between gap-1">
           {/* Subcategory or DJ Badge */}
           {episodeNumber ? (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-600/90 text-[10px] font-bold text-white shadow-sm">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-rose-600/90 text-[9px] sm:text-[10px] font-bold text-white shadow-sm">
               <span>EP {episodeNumber}</span>
             </div>
           ) : isDjTranslated && item.djName ? (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[10px] font-semibold text-rose-300">
-              <Mic className="w-2.5 h-2.5 text-rose-400" />
-              <span className="truncate max-w-[85px] sm:max-w-[100px]">{item.djName}</span>
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[9px] sm:text-[10px] font-semibold text-rose-300">
+              <Mic className="w-2.5 h-2.5 text-rose-400 shrink-0" />
+              <span className="truncate max-w-[65px] xs:max-w-[80px] sm:max-w-[100px]">{item.djName}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[10px] font-medium text-neutral-300">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-neutral-950/85 backdrop-blur-md border border-neutral-700/60 text-[9px] sm:text-[10px] font-medium text-neutral-300">
               {item.type === 'tv' ? <Tv className="w-2.5 h-2.5 text-cyan-400" /> : <Film className="w-2.5 h-2.5 text-amber-400" />}
               <span className="capitalize">{item.subCategory === 'tv' ? 'Series' : 'Movie'}</span>
             </div>
@@ -76,14 +76,14 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                   e.stopPropagation();
                   onRemoveFromProgress();
                 }}
-                className="w-6 h-6 rounded-full bg-neutral-950/80 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors"
+                className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-neutral-950/80 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center transition-colors touch-manipulation"
                 title="Remove from Continue Watching"
                 aria-label="Remove from Continue Watching"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
               </button>
             ) : (
-              /* Heart Bookmark Button */
+              /* Heart Bookmark Button - Touch optimized min 36-40px hit area via padding */
               onToggleWatchlist && (
                 <button
                   type="button"
@@ -91,7 +91,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                     e.stopPropagation();
                     onToggleWatchlist(item);
                   }}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center backdrop-blur-md border transition-all ${
+                  className={`w-7 h-7 sm:w-6 sm:h-6 rounded-full flex items-center justify-center backdrop-blur-md border transition-all touch-manipulation ${
                     isWatchlisted
                       ? 'bg-rose-600 border-rose-500 text-white shadow-sm'
                       : 'bg-neutral-950/80 border-neutral-700/70 text-neutral-300 hover:text-rose-400 hover:border-rose-500/50'
@@ -99,7 +99,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                   title={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
                   aria-label={isWatchlisted ? 'Remove from Watchlist' : 'Add to Watchlist'}
                 >
-                  <Heart className={`w-3 h-3 ${isWatchlisted ? 'fill-current text-white' : ''}`} />
+                  <Heart className={`w-3.5 h-3.5 sm:w-3 sm:h-3 ${isWatchlisted ? 'fill-current text-white' : ''}`} />
                 </button>
               )
             )}
@@ -225,10 +225,24 @@ export const MediaCard: React.FC<MediaCardProps> = ({
               )}
             </span>
 
-            {/* Quality pill */}
-            <span className="text-[9px] font-mono text-neutral-500 uppercase font-semibold">
-              {isFreeTier ? '480p' : '4K'}
-            </span>
+            {/* Quality pill and mobile direct play */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-[9px] font-mono text-neutral-500 uppercase font-semibold">
+                {isFreeTier ? '480p' : '4K'}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPlay(item);
+                }}
+                className="sm:hidden w-6 h-6 rounded-full bg-rose-600/90 hover:bg-rose-500 text-white flex items-center justify-center transition-colors touch-manipulation"
+                title="Play now"
+                aria-label="Play now"
+              >
+                <Play className="w-2.5 h-2.5 fill-current ml-0.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -76,7 +76,7 @@ export const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({
       {/* Horizontal Rail */}
       <div 
         ref={scrollContainerRef}
-        className="flex gap-3 overflow-x-auto scrollbar-none pb-2 pt-1 px-1 snap-x scroll-smooth"
+        className="flex gap-2.5 sm:gap-3 overflow-x-auto scrollbar-none pb-2 pt-1 px-1 snap-x scroll-smooth touch-pan-x"
       >
         {items.map((item) => {
           const matchingMedia = MEDIA_CATALOG.find((m) => m.id === item.mediaId);
@@ -86,12 +86,12 @@ export const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({
           return (
             <div
               key={item.id}
-              className="group relative w-[165px] sm:w-[195px] md:w-[220px] shrink-0 bg-neutral-900 rounded-lg sm:rounded-xl overflow-hidden border border-neutral-800/90 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-black/80 snap-start"
+              className="group relative w-[136px] xs:w-[150px] sm:w-[175px] md:w-[200px] lg:w-[220px] shrink-0 bg-neutral-900 rounded-lg sm:rounded-xl overflow-hidden border border-neutral-800/90 hover:border-neutral-600 transition-all duration-300 flex flex-col hover:shadow-2xl hover:shadow-black/80 snap-start select-none"
             >
               {/* Artwork Container */}
               <div 
                 onClick={() => onResume(item)}
-                className={`relative aspect-[16/9] w-full ${item.posterBg || 'bg-gradient-to-br from-neutral-800 to-neutral-950'} p-2.5 flex flex-col justify-between cursor-pointer overflow-hidden`}
+                className={`relative aspect-[16/9] w-full ${item.posterBg || 'bg-gradient-to-br from-neutral-800 to-neutral-950'} p-2 sm:p-2.5 flex flex-col justify-between cursor-pointer overflow-hidden`}
               >
                 <div className="absolute inset-0 bg-radial-gradient opacity-30 pointer-events-none" />
                 <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent pointer-events-none" />
@@ -99,28 +99,28 @@ export const ContinueWatchingRow: React.FC<ContinueWatchingRowProps> = ({
                 {/* Top Bar: Badge & Dismiss */}
                 <div className="relative z-10 flex items-center justify-between gap-1">
                   {isEpisode ? (
-                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-[10px] font-bold text-white shadow-sm flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded bg-rose-600 text-[9px] sm:text-[10px] font-bold text-white shadow-sm flex items-center gap-1">
                       <Tv className="w-2.5 h-2.5" />
                       <span>EP {item.episodeNumber}</span>
                     </span>
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded bg-neutral-950/80 border border-neutral-700/60 text-[10px] font-medium text-neutral-300 flex items-center gap-1">
+                    <span className="px-1.5 py-0.5 rounded bg-neutral-950/80 border border-neutral-700/60 text-[9px] sm:text-[10px] font-medium text-neutral-300 flex items-center gap-1">
                       <Film className="w-2.5 h-2.5 text-amber-400" />
                       <span>Movie</span>
                     </span>
                   )}
 
-                  {/* Remove / Dismiss Button */}
+                  {/* Remove / Dismiss Button with touch friendly area */}
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       onRemove(item.id);
                     }}
-                    className="w-6 h-6 rounded-full bg-neutral-950/85 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center border border-neutral-700/60 transition-colors"
+                    className="w-7 h-7 sm:w-6 sm:h-6 rounded-full bg-neutral-950/85 hover:bg-neutral-800 text-neutral-400 hover:text-white flex items-center justify-center border border-neutral-700/60 transition-colors touch-manipulation"
                     title="Remove from Continue Watching"
                     aria-label="Remove from Continue Watching"
                   >
-                    <X className="w-3 h-3" />
+                    <X className="w-3.5 h-3.5 sm:w-3 sm:h-3" />
                   </button>
                 </div>
 
